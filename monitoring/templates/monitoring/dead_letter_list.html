@@ -1,0 +1,31 @@
+{% extends "monitoring/base.html" %}
+
+{% block title %}Failures{% endblock %}
+
+{% block content %}
+<h1>Failures</h1>
+<table>
+  <thead>
+    <tr>
+      <th>Source</th>
+      <th>URL</th>
+      <th>Reason</th>
+      <th>Created</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for dead_letter in dead_letters %}
+      <tr>
+        <td>{{ dead_letter.source.name }}</td>
+        <td><a href="{{ dead_letter.url }}">{{ dead_letter.url }}</a></td>
+        <td>{{ dead_letter.reason }}</td>
+        <td class="muted">{{ dead_letter.created_at|date:"Y-m-d H:i" }}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="4" class="muted">No unresolved failures.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% include "monitoring/pagination.html" %}
+{% endblock %}
+

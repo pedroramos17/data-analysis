@@ -1,0 +1,110 @@
+{% extends "monitoring/base.html" %}
+
+{% block title %}Parquet Export{% endblock %}
+
+{% block content %}
+<h1>Parquet Export</h1>
+<section class="panel">
+  <p><strong>Path:</strong> {{ artifact.path }}</p>
+  <p><strong>Rows:</strong> {{ artifact.row_count }} | <strong>Bytes:</strong> {{ artifact.byte_size }}</p>
+  <p class="muted">Created {{ artifact.created_at|date:"Y-m-d H:i" }}</p>
+</section>
+
+<section class="panel">
+  <h2>Schema</h2>
+  <table>
+    <thead><tr><th>Name</th><th>Type</th></tr></thead>
+    <tbody>
+      {% for field in artifact.schema %}
+        <tr><td>{{ field.name }}</td><td>{{ field.type }}</td></tr>
+      {% empty %}
+        <tr><td colspan="2" class="muted">No schema fields recorded.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="panel">
+  <h2>Dynamic Preview</h2>
+  <div class="actions">
+    <input id="parquet-search" type="search" placeholder="Search rows">
+    <select id="parquet-page-size">
+      <option value="10">10 rows</option>
+      <option value="25" selected>25 rows</option>
+      <option value="50">50 rows</option>
+    </select>
+    <button id="parquet-refresh" type="button">Refresh</button>
+  </div>
+  <div id="parquet-columns" class="actions"></div>
+  <p id="parquet-count" class="muted"></p>
+  <div class="table-scroll">
+    <table id="parquet-table">
+      <thead></thead>
+      <tbody><tr><td class="muted">Loading export rows...</td></tr></tbody>
+    </table>
+  </div>
+</section>
+<script>
+  const rowsUrl = "{% url 'monitoring:export-artifact-rows-api' artifact.id %}";
+  const table = document.getElementById("parquet-table");
+  const search = document.getElementById("parquet-search");
+  const pageSize = document.getElementById("parquet-page-size");
+  const count = document.getElementById("parquet-count");
+  const columnBox = document.getElementById("parquet-columns");
+  let visibleColumns = new Set();
+  let sortColumn = "";
+  let direction = "asc";
+
+  async function loadRows() {
+    const params = new URLSearchParams({search: search.value, page_size: pageSize.value, sort: sortColumn, direction});
+    const response = await fetch(`${rowsUrl}?${params}`);
+    const payload = await response.json();
+    if (visibleColumns.size === 0) payload.columns.forEach(column => visibleColumns.add(column));
+    renderColumns(payload.columns);
+    renderTable(payload.columns, payload.rows);
+    count.textContent = `${payload.total} matching rows`;
+  }
+
+  function renderColumns(columns) {
+    columnBox.innerHTML = columns.map(column => `<label class="pill"><input type="checkbox" data-column="${column}" ${visibleColumns.has(column) ? "checked" : ""}> ${column}</label>`).join("");
+    columnBox.querySelectorAll("input").forEach(input => input.addEventListener("change", toggleColumn));
+  }
+
+  function toggleColumn(event) {
+    const column = event.target.dataset.column;
+    event.target.checked ? visibleColumns.add(column) : visibleColumns.delete(column);
+    loadRows();
+  }
+
+  function renderTable(columns, rows) {
+    const active = columns.filter(column => visibleColumns.has(column));
+    table.querySelector("thead").innerHTML = `<tr>${active.map(headerCell).join("")}</tr>`;
+    table.querySelector("tbody").innerHTML = rows.length ? rows.map(row => rowHtml(active, row)).join("") : `<tr><td class="muted">No rows found.</td></tr>`;
+    table.querySelectorAll("th button").forEach(button => button.addEventListener("click", sortRows));
+  }
+
+  function headerCell(column) {
+    return `<th><button class="secondary" type="button" data-column="${column}">${column}</button></th>`;
+  }
+
+  function rowHtml(columns, row) {
+    return `<tr>${columns.map(column => `<td>${escapeHtml(String(row[column] ?? "").slice(0, 180))}</td>`).join("")}</tr>`;
+  }
+
+  function escapeHtml(value) {
+    return value.replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[character]));
+  }
+
+  function sortRows(event) {
+    const column = event.target.dataset.column;
+    direction = sortColumn === column && direction === "asc" ? "desc" : "asc";
+    sortColumn = column;
+    loadRows();
+  }
+
+  document.getElementById("parquet-refresh").addEventListener("click", loadRows);
+  search.addEventListener("input", loadRows);
+  pageSize.addEventListener("change", loadRows);
+  loadRows();
+</script>
+{% endblock %}

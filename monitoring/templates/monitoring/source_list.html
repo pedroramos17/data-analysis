@@ -1,0 +1,42 @@
+{% extends "monitoring/base.html" %}
+
+{% block title %}Sources{% endblock %}
+
+{% block content %}
+<h1>Sources</h1>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Category</th>
+      <th>Tier</th>
+      <th>Type</th>
+      <th>Fetch</th>
+      <th>Cadence</th>
+      <th>Status</th>
+      <th>Tags</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for source in sources %}
+      <tr>
+        <td><a href="{% url 'monitoring:source-detail' source.id %}">{{ source.name }}</a></td>
+        <td>{{ source.get_category_display }}</td>
+        <td>{{ source.source_tier }}</td>
+        <td>{{ source.get_source_type_display }}</td>
+        <td>{{ source.get_fetch_method_display }}</td>
+        <td>{{ source.cadence_minutes }} min</td>
+        <td>{% if source.is_enabled %}Enabled{% else %}Disabled{% endif %}</td>
+        <td>
+          {% for tag in source.tags %}
+            <span class="pill">{{ tag }}</span>
+          {% endfor %}
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="8" class="muted">No sources registered.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% include "monitoring/pagination.html" %}
+{% endblock %}

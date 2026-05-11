@@ -1,0 +1,33 @@
+[
+  {
+    "name": "CISA Advisories",
+    "url": "https://www.cisa.gov/cybersecurity-advisories/all.xml",
+    "source_type": "rss",
+    "fetch_method": "http",
+    "cadence_minutes": 60,
+    "tags": ["security", "advisory"],
+    "is_enabled": true,
+    "rate_limit_seconds": 10
+  },
+  {
+    "name": "Django Weblog",
+    "url": "https://www.djangoproject.com/weblog/",
+    "source_type": "html",
+    "fetch_method": "http",
+    "cadence_minutes": 360,
+    "tags": ["python", "django"],
+    "is_enabled": true,
+    "rate_limit_seconds": 10
+  },
+  {
+    "name": "Django Sitemap",
+    "url": "https://www.djangoproject.com/sitemap.xml",
+    "source_type": "sitemap",
+    "fetch_method": "http",
+    "cadence_minutes": 720,
+    "tags": ["python", "web"],
+    "is_enabled": false,
+    "rate_limit_seconds": 10
+  }
+]
+
