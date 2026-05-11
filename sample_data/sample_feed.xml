@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Sample Public Advisories</title>
+    <item>
+      <title>OpenSSL Advisory Published</title>
+      <link>https://example.org/security/openssl-advisory?utm_source=newsletter</link>
+      <guid>advisory-001</guid>
+      <pubDate>Fri, 08 May 2026 12:30:00 GMT</pubDate>
+      <author>security@example.org</author>
+      <description>OpenSSL published a public advisory for supported users.</description>
+    </item>
+    <item>
+      <title>Python Packaging Trend Report</title>
+      <link>https://example.org/trends/python-packaging</link>
+      <guid>trend-001</guid>
+      <pubDate>2026-05-08T13:00:00Z</pubDate>
+      <description>Python maintainers discussed package signing adoption.</description>
+    </item>
+  </channel>
+</rss>
+

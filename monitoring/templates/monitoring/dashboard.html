@@ -1,0 +1,119 @@
+{% extends "monitoring/base.html" %}
+
+{% block title %}Operations Dashboard{% endblock %}
+
+{% block content %}
+<h1>Operations Dashboard</h1>
+<p class="muted">Run bounded ingestion intelligence tasks, inspect exports, and test the offline NLP pipeline.</p>
+
+<section class="grid" aria-label="System counts">
+  <div class="panel"><div class="stat">{{ stats.enabled_sources }}</div><div class="muted">Enabled sources</div></div>
+  <div class="panel"><div class="stat">{{ stats.documents }}</div><div class="muted">Documents</div></div>
+  <div class="panel"><div class="stat">{{ stats.open_alerts }}</div><div class="muted">Open alerts</div></div>
+  <div class="panel"><div class="stat">{{ stats.topic_clusters }}</div><div class="muted">Topic clusters</div></div>
+  <div class="panel"><div class="stat">{{ stats.pending_candidates }}</div><div class="muted"><a href="{% url 'monitoring:discovery-candidate-list' %}">Pending candidates</a></div></div>
+</section>
+
+<section class="panel">
+  <h2>Maintenance Actions</h2>
+  <div class="grid">
+    <form method="post" action="{% url 'monitoring:enrich-documents-action' %}">
+      {% csrf_token %}
+      <h3>Enrich Documents</h3>
+      <input type="number" name="limit" value="500" min="1">
+      <label class="muted"><input type="checkbox" name="force" value="1"> Force</label>
+      <button type="submit">Run enrichment</button>
+    </form>
+    <form method="post" action="{% url 'monitoring:discover-sources-action' %}">
+      {% csrf_token %}
+      <h3>Discover Sources</h3>
+      <input type="number" name="limit" value="200" min="1">
+      <button type="submit">Run discovery</button>
+    </form>
+    <form method="post" action="{% url 'monitoring:evaluate-alerts-action' %}">
+      {% csrf_token %}
+      <h3>Evaluate Alerts</h3>
+      <input type="number" name="lookback_hours" value="24" min="1">
+      <button type="submit">Evaluate alerts</button>
+    </form>
+    <form method="post" action="{% url 'monitoring:cluster-topics-action' %}">
+      {% csrf_token %}
+      <h3>Cluster Topics</h3>
+      <input type="number" name="window_hours" value="72" min="1">
+      <input type="number" name="min_documents" value="3" min="2">
+      <button type="submit">Build clusters</button>
+    </form>
+    <form method="post" action="{% url 'monitoring:score-source-reputation-action' %}">
+      {% csrf_token %}
+      <h3>Score Reputation</h3>
+      <input type="number" name="window_days" value="30" min="1">
+      <button type="submit">Score sources</button>
+    </form>
+    <form method="post" action="{% url 'monitoring:export-parquet-action' %}">
+      {% csrf_token %}
+      <h3>Export Parquet</h3>
+      <p class="muted">Create a reviewed artifact from normalized documents.</p>
+      <button type="submit">Export now</button>
+    </form>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Offline NLP Pipeline</h2>
+  <form method="post" action="{% url 'monitoring:nlp-pipeline-action' %}">
+    {% csrf_token %}
+    <textarea name="text" placeholder="Paste public-source text to enrich locally."></textarea>
+    <div class="actions">
+      <select name="tasks">
+        <option value="all">All tasks</option>
+        <option value="entities,keywords,summary">Entities, keywords, summary</option>
+        <option value="topics,sentiment,hashtags">Topics, sentiment, hashtags</option>
+        <option value="embeddings">Embeddings only</option>
+      </select>
+      <button type="submit">Run NLP</button>
+    </div>
+  </form>
+  {% if nlp_result_json %}
+    <h3>Latest NLP JSON</h3>
+    <pre>{{ nlp_result_json }}</pre>
+  {% endif %}
+</section>
+
+<section class="grid">
+  <div class="panel">
+    <h2>Recent NLP Costs</h2>
+    <table>
+      <thead><tr><th>Entrypoint</th><th>Runtime</th><th>Tokens</th><th>Created</th></tr></thead>
+      <tbody>
+        {% for metric in recent_metrics %}
+          <tr>
+            <td>{{ metric.entrypoint }}</td>
+            <td>{{ metric.total_ms|floatformat:2 }} ms</td>
+            <td>{{ metric.token_count }}</td>
+            <td class="muted">{{ metric.created_at|date:"Y-m-d H:i" }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4" class="muted">No NLP runs yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="panel">
+    <h2>Recent Exports</h2>
+    <table>
+      <thead><tr><th>Path</th><th>Rows</th><th>Created</th></tr></thead>
+      <tbody>
+        {% for artifact in recent_exports %}
+          <tr>
+            <td><a href="{% url 'monitoring:export-artifact-detail' artifact.id %}">{{ artifact.path }}</a></td>
+            <td>{{ artifact.row_count }}</td>
+            <td class="muted">{{ artifact.created_at|date:"Y-m-d H:i" }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="3" class="muted">No exports yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

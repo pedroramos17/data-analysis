@@ -1,0 +1,53 @@
+{% extends "monitoring/base.html" %}
+
+{% block title %}Documents{% endblock %}
+
+{% block content %}
+<h1>Documents</h1>
+<form class="filters" method="get">
+  <input type="search" name="q" value="{{ request.GET.q }}" placeholder="Search title, body, author, entity, tag">
+  <select name="source">
+    <option value="">All sources</option>
+    {% for source in sources %}
+      <option value="{{ source.id }}" {% if request.GET.source == source.id|stringformat:"s" %}selected{% endif %}>{{ source.name }}</option>
+    {% endfor %}
+  </select>
+  <input name="language" value="{{ request.GET.language }}" placeholder="Language">
+  <input type="date" name="date" value="{{ request.GET.date }}">
+  <button type="submit">Filter</button>
+</form>
+<table>
+  <thead>
+    <tr>
+      <th>Title</th>
+      <th>Source</th>
+      <th>Published</th>
+      <th>Entities</th>
+      <th>Tags</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for document in documents %}
+      <tr>
+        <td><a href="{{ document.canonical_url }}">{{ document.title }}</a></td>
+        <td><a href="{% url 'monitoring:source-detail' document.source_id %}">{{ document.source.name }}</a></td>
+        <td class="muted">{{ document.published_at|date:"Y-m-d H:i" }}</td>
+        <td>
+          {% for entity in document.entities|slice:":4" %}
+            <span class="pill">{{ entity }}</span>
+          {% endfor %}
+        </td>
+        <td>
+          {% for tag in document.tags %}
+            <span class="pill">{{ tag }}</span>
+          {% endfor %}
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="5" class="muted">No documents found.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% include "monitoring/pagination.html" %}
+{% endblock %}
+

@@ -1,0 +1,76 @@
+{% extends "monitoring/base.html" %}
+
+{% block title %}Alerts{% endblock %}
+
+{% block content %}
+<h1>Alerts</h1>
+<form class="filters" method="get">
+  <select name="severity">
+    <option value="">All severities</option>
+    <option value="low" {% if request.GET.severity == "low" %}selected{% endif %}>Low</option>
+    <option value="medium" {% if request.GET.severity == "medium" %}selected{% endif %}>Medium</option>
+    <option value="high" {% if request.GET.severity == "high" %}selected{% endif %}>High</option>
+    <option value="critical" {% if request.GET.severity == "critical" %}selected{% endif %}>Critical</option>
+  </select>
+  <select name="status">
+    <option value="">All statuses</option>
+    <option value="open" {% if request.GET.status == "open" %}selected{% endif %}>Open</option>
+    <option value="acknowledged" {% if request.GET.status == "acknowledged" %}selected{% endif %}>Acknowledged</option>
+    <option value="resolved" {% if request.GET.status == "resolved" %}selected{% endif %}>Resolved</option>
+    <option value="ignored" {% if request.GET.status == "ignored" %}selected{% endif %}>Ignored</option>
+    <option value="duplicate" {% if request.GET.status == "duplicate" %}selected{% endif %}>Duplicate</option>
+  </select>
+  <button type="submit">Filter</button>
+</form>
+<table>
+  <thead>
+    <tr><th>Signal</th><th>Trigger</th><th>Scores</th><th>Evidence</th><th>Status</th><th>Review</th></tr>
+  </thead>
+  <tbody>
+    {% for alert in alert_hits %}
+      <tr>
+        <td>
+          <strong>{{ alert.title }}</strong><br>
+          <span class="muted">{{ alert.explanation|default:alert.matched_text }}</span>
+        </td>
+        <td>
+          {{ alert.trigger_type }}<br>
+          <span class="muted">
+            {% if alert.rule %}Rule: {{ alert.rule.name }}{% endif %}
+            {% if alert.detector %}Detector: {{ alert.detector.name }}{% endif %}
+          </span>
+        </td>
+        <td>
+          {{ alert.severity }} | {{ alert.severity_score }}<br>
+          <span class="muted">trend {{ alert.trend_score }} | novelty {{ alert.novelty_score }} | confidence {{ alert.confidence_score }}</span>
+        </td>
+        <td>
+          {% if alert.cluster %}{{ alert.cluster.canonical_title|default:alert.cluster.label }}{% else %}<span class="muted">No cluster</span>{% endif %}<br>
+          <span class="muted">{{ alert.alerthitdocument_set.count }} evidence docs</span>
+        </td>
+        <td>{{ alert.status }}<br><span class="muted">{{ alert.detected_at|date:"Y-m-d H:i" }}</span></td>
+        <td>
+          <div class="actions">
+            <form method="post" action="{% url 'monitoring:alert-status-action' alert.id 'acknowledge' %}">{% csrf_token %}<button type="submit">Ack</button></form>
+            <form method="post" action="{% url 'monitoring:alert-status-action' alert.id 'resolve' %}">{% csrf_token %}<button type="submit">Resolve</button></form>
+            <form method="post" action="{% url 'monitoring:alert-status-action' alert.id 'ignore' %}">{% csrf_token %}<button class="secondary" type="submit">Ignore</button></form>
+          </div>
+          <form method="post" action="{% url 'monitoring:alert-feedback-action' alert.id %}">
+            {% csrf_token %}
+            <select name="label">
+              <option value="useful">Useful</option>
+              <option value="false_positive">False positive</option>
+              <option value="duplicate">Duplicate</option>
+              <option value="too_late">Too late</option>
+            </select>
+            <button class="secondary" type="submit">Feedback</button>
+          </form>
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="6" class="muted">No alerts found.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% include "monitoring/pagination.html" %}
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "monitoring/base.html" %}
+
+{% block title %}Discovery Candidates{% endblock %}
+
+{% block content %}
+<h1>Discovery Candidates</h1>
+<form class="filters" method="get">
+  <select name="status">
+    <option value="">All statuses</option>
+    <option value="pending" {% if request.GET.status == "pending" %}selected{% endif %}>Pending</option>
+    <option value="approved" {% if request.GET.status == "approved" %}selected{% endif %}>Approved</option>
+    <option value="rejected" {% if request.GET.status == "rejected" %}selected{% endif %}>Rejected</option>
+  </select>
+  <select name="candidate_type">
+    <option value="">All types</option>
+    <option value="rss" {% if request.GET.candidate_type == "rss" %}selected{% endif %}>RSS</option>
+    <option value="domain" {% if request.GET.candidate_type == "domain" %}selected{% endif %}>Domain</option>
+    <option value="topic" {% if request.GET.candidate_type == "topic" %}selected{% endif %}>Topic</option>
+  </select>
+  <button type="submit">Filter</button>
+</form>
+<table>
+  <thead>
+    <tr><th>Name</th><th>Type</th><th>Confidence</th><th>Evidence</th><th>Status</th><th>Actions</th></tr>
+  </thead>
+  <tbody>
+    {% for candidate in candidates %}
+      <tr>
+        <td><a href="{{ candidate.url }}">{{ candidate.name }}</a><br><span class="muted">{{ candidate.url }}</span></td>
+        <td>{{ candidate.candidate_type }}</td>
+        <td>{{ candidate.confidence }}</td>
+        <td><a href="{{ candidate.evidence_url }}">{{ candidate.evidence_url|truncatechars:80 }}</a></td>
+        <td>{{ candidate.status }}</td>
+        <td class="actions">
+          <form method="post" action="{% url 'monitoring:approve-candidate-action' candidate.id %}">{% csrf_token %}<button type="submit">Approve</button></form>
+          <form method="post" action="{% url 'monitoring:reject-candidate-action' candidate.id %}">{% csrf_token %}<button class="secondary" type="submit">Reject</button></form>
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="6" class="muted">No discovered candidates found.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% include "monitoring/pagination.html" %}
+{% endblock %}

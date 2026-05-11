@@ -1,0 +1,13 @@
+{
+  "items": [
+    {
+      "id": "api-001",
+      "url": "https://example.org/api/public-item",
+      "title": "Public API Item",
+      "summary": "A sample item from an approved public API.",
+      "published_at": "2026-05-08T15:00:00Z",
+      "author": "Example API"
+    }
+  ]
+}
+

@@ -1,0 +1,53 @@
+{% extends "monitoring/base.html" %}
+
+{% block title %}Feed Digest{% endblock %}
+
+{% block content %}
+<h1>Feed Digest</h1>
+<p class="muted">Generated {{ digest.generated_at }}</p>
+<p class="muted">Open alerts: {{ digest.alert_counts.open }}</p>
+{% if digest.top_clusters %}
+  <h2>Top Clusters</h2>
+  <table>
+    <thead><tr><th>Topic</th><th>Documents</th><th>Score</th><th>Keywords</th></tr></thead>
+    <tbody>
+      {% for cluster in digest.top_clusters %}
+        <tr>
+          <td>{{ cluster.label }}</td>
+          <td>{{ cluster.document_count }}</td>
+          <td>{{ cluster.score }}</td>
+          <td>
+            {% for keyword in cluster.keywords %}
+              <span class="pill">{{ keyword }}</span>
+            {% endfor %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endif %}
+{% for category, items in digest.categories.items %}
+  <h2>{{ category|title }}</h2>
+  <table>
+    <thead>
+      <tr><th>Title</th><th>Source</th><th>Published</th><th>Entities</th></tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+        <tr>
+          <td><a href="{{ item.url }}">{{ item.title }}</a><br><span class="muted">{{ item.snippet }}</span></td>
+          <td>{{ item.source }}</td>
+          <td class="muted">{{ item.published_at }}</td>
+          <td>
+            {% for entity in item.entities %}
+              <span class="pill">{{ entity }}</span>
+            {% endfor %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% empty %}
+  <p class="muted">No digest items available.</p>
+{% endfor %}
+{% endblock %}

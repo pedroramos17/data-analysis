@@ -1,0 +1,42 @@
+{% extends "monitoring/base.html" %}
+
+{% block title %}{{ source.name }}{% endblock %}
+
+{% block content %}
+<h1>{{ source.name }}</h1>
+<p><a href="{{ source.url }}">{{ source.url }}</a></p>
+<table>
+  <tbody>
+    <tr><th>Type</th><td>{{ source.get_source_type_display }}</td></tr>
+    <tr><th>Category</th><td>{{ source.get_category_display }}</td></tr>
+    <tr><th>Tier</th><td>{{ source.source_tier }}</td></tr>
+    <tr><th>Reputation</th><td>{{ source.reputation_score }}</td></tr>
+    <tr><th>Reputation components</th><td>{% if reputation %}{{ reputation.components }}{% else %}None{% endif %}</td></tr>
+    <tr><th>Fetch method</th><td>{{ source.get_fetch_method_display }}</td></tr>
+    <tr><th>Cadence</th><td>{{ source.cadence_minutes }} minutes</td></tr>
+    <tr><th>Rate limit</th><td>{{ source.rate_limit_seconds }} seconds</td></tr>
+    <tr><th>Status</th><td>{% if source.is_enabled %}Enabled{% else %}Disabled{% endif %}</td></tr>
+    <tr><th>Health</th><td>{% if checkpoint %}{{ checkpoint.last_status|default:"never" }}{% else %}never{% endif %}</td></tr>
+    <tr><th>Failures</th><td>{% if checkpoint %}{{ checkpoint.consecutive_failures }}{% else %}0{% endif %}</td></tr>
+    <tr><th>Cooldown</th><td>{% if checkpoint.cooldown_until %}{{ checkpoint.cooldown_until|date:"Y-m-d H:i" }}{% else %}None{% endif %}</td></tr>
+  </tbody>
+</table>
+
+<h2>Recent Documents</h2>
+<table>
+  <thead>
+    <tr><th>Title</th><th>Published</th><th>Language</th></tr>
+  </thead>
+  <tbody>
+    {% for document in documents %}
+      <tr>
+        <td><a href="{{ document.canonical_url }}">{{ document.title }}</a></td>
+        <td class="muted">{{ document.published_at|date:"Y-m-d H:i" }}</td>
+        <td>{{ document.language }}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="3" class="muted">No documents ingested yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
