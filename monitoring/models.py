@@ -480,3 +480,116 @@ from monitoring.operational_models import ExportArtifact, NlpRunMetric  # noqa: 
 
 EventCluster = TopicCluster
 EventClusterDocument = DocumentTopic
+
+
+class IngestionRun(models.Model):
+    class Status(models.TextChoices):
+        SUCCESS = "success", "Success"
+        PARTIAL = "partial", "Partial"
+        FAILED = "failed", "Failed"
+        DRY_RUN = "dry_run", "Dry run"
+
+    source = models.ForeignKey(Source, on_delete=models.CASCADE)
+    started_at = models.DateTimeField(default=timezone.now)
+    finished_at = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=Status.choices)
+    items_seen = models.PositiveIntegerField(default=0)
+    items_created = models.PositiveIntegerField(default=0)
+    items_updated = models.PositiveIntegerField(default=0)
+    items_skipped = models.PositiveIntegerField(default=0)
+    error_count = models.PositiveIntegerField(default=0)
+    error_summary = models.TextField(blank=True)
+    cursor_before = models.CharField(max_length=1200, blank=True)
+    cursor_after = models.CharField(max_length=1200, blank=True)
+    duration_ms = models.PositiveIntegerField(default=0)
+
+
+class IngestedItem(models.Model):
+    source = models.ForeignKey(Source, on_delete=models.CASCADE)
+    external_id = models.CharField(max_length=512, blank=True)
+    canonical_url = models.URLField(max_length=1200)
+    raw_url = models.URLField(max_length=1200, blank=True)
+    title = models.CharField(max_length=500)
+    summary = models.TextField(blank=True)
+    author = models.CharField(max_length=300, blank=True)
+    publisher = models.CharField(max_length=300, blank=True)
+    published_at = models.DateTimeField(null=True, blank=True)
+    fetched_at = models.DateTimeField(default=timezone.now)
+    tags_json = models.JSONField(default=list, blank=True)
+    language = models.CharField(max_length=16, blank=True)
+    content_type = models.CharField(max_length=64, blank=True)
+    raw_payload_json = models.JSONField(default=dict, blank=True)
+    extraction_method = models.CharField(max_length=20, default="rss")
+    quality_score = models.FloatField(default=0)
+    dedupe_hash = models.CharField(max_length=64, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["source", "published_at"]),
+            models.Index(fields=["canonical_url"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(fields=["source", "external_id"], condition=~models.Q(external_id=""), name="uniq_source_external_id_if_exists")
+        ]
+
+
+class MarketInstrument(models.Model):
+    symbol = models.CharField(max_length=32)
+    exchange = models.CharField(max_length=32)
+    name = models.CharField(max_length=255, blank=True)
+    asset_class = models.CharField(max_length=64, blank=True)
+    currency = models.CharField(max_length=16, blank=True)
+    country = models.CharField(max_length=64, blank=True)
+    sector = models.CharField(max_length=128, blank=True)
+    industry = models.CharField(max_length=128, blank=True)
+    metadata_json = models.JSONField(default=dict, blank=True)
+    active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["symbol", "exchange"], name="uniq_symbol_exchange")]
+
+
+class MarketBar(models.Model):
+    instrument = models.ForeignKey(MarketInstrument, on_delete=models.CASCADE)
+    source = models.ForeignKey(Source, on_delete=models.CASCADE)
+    timestamp = models.DateTimeField()
+    timeframe = models.CharField(max_length=10)
+    open = models.FloatField(null=True, blank=True)
+    high = models.FloatField(null=True, blank=True)
+    low = models.FloatField(null=True, blank=True)
+    close = models.FloatField(null=True, blank=True)
+    adjusted_close = models.FloatField(null=True, blank=True)
+    volume = models.FloatField(null=True, blank=True)
+    dollar_volume = models.FloatField(null=True, blank=True)
+    trade_count = models.BigIntegerField(null=True, blank=True)
+    raw_payload_json = models.JSONField(default=dict, blank=True)
+    quality_flags_json = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["instrument", "source", "timeframe", "timestamp"], name="uniq_market_bar")]
+        indexes = [models.Index(fields=["instrument", "timestamp"]), models.Index(fields=["source", "timestamp"])]
+
+
+class MarketTick(models.Model):
+    instrument = models.ForeignKey(MarketInstrument, on_delete=models.CASCADE)
+    source = models.ForeignKey(Source, on_delete=models.CASCADE)
+    timestamp = models.DateTimeField()
+    price = models.FloatField(null=True, blank=True)
+    bid = models.FloatField(null=True, blank=True)
+    ask = models.FloatField(null=True, blank=True)
+    last = models.FloatField(null=True, blank=True)
+    volume = models.FloatField(null=True, blank=True)
+    dollar_volume = models.FloatField(null=True, blank=True)
+    trade_id = models.CharField(max_length=128, blank=True)
+    raw_payload_json = models.JSONField(default=dict, blank=True)
+    quality_flags_json = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["instrument", "source", "timestamp", "trade_id"], condition=~models.Q(trade_id=""), name="uniq_market_tick_trade")]
+        indexes = [models.Index(fields=["instrument", "timestamp"]), models.Index(fields=["source", "timestamp"])]
