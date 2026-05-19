@@ -1,0 +1,6 @@
+-r requirements.txt
+
+# Cloud jobs read JSON manifests and Parquet/Arrow artifacts. Provider SDKs
+# for AWS, GCP, Azure, Kaggle, Colab, RunPod, Modal, or similar platforms are
+# intentionally not required by the core project.
+
