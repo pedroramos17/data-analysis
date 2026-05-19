@@ -10,6 +10,8 @@ from django.shortcuts import redirect
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView, TemplateView
 
+from monitoring.catalog_sync import ensure_catalogs_synced_if_enabled
+from monitoring.dashboard_table_data import exports_table, metrics_table
 from monitoring.dashboard_actions import (
     DashboardActionResult,
     run_cluster_topics_action,
@@ -17,6 +19,9 @@ from monitoring.dashboard_actions import (
     run_enrich_documents_action,
     run_evaluate_alerts_action,
     run_export_parquet_action,
+    run_ingest_sources_auto_run_action,
+    run_ingest_sources_once_action,
+    run_sync_catalogs_action,
     run_nlp_pipeline_action,
     run_score_reputation_action,
 )
@@ -51,13 +56,18 @@ class DashboardView(TemplateView):
         Example:
             Django calls this while rendering the dashboard.
         """
+        ensure_catalogs_synced_if_enabled()
         context = super().get_context_data(**kwargs)
         context["stats"] = _dashboard_stats()
         nlp_result = self.request.session.get("latest_nlp_result")
         context["nlp_result"] = nlp_result
         context["nlp_result_json"] = _pretty_json(nlp_result)
-        context["recent_metrics"] = NlpRunMetric.objects.all()[:5]
-        context["recent_exports"] = ExportArtifact.objects.all()[:5]
+        recent_metrics = NlpRunMetric.objects.all()[:5]
+        recent_exports = ExportArtifact.objects.all()[:5]
+        context["recent_metrics"] = recent_metrics
+        context["recent_exports"] = recent_exports
+        context["recent_metrics_table"] = metrics_table(recent_metrics)
+        context["recent_exports_table"] = exports_table(recent_exports)
         return context
 
 
@@ -289,6 +299,39 @@ def discover_sources_action(request: HttpRequest) -> HttpResponseRedirect:
         `POST /actions/discover-sources/`
     """
     result = run_discover_sources_action(limit=_post_int(request, "limit", 200))
+    return _action_redirect(request, result)
+
+
+@require_POST
+def ingest_sources_run_once_action(request: HttpRequest) -> HttpResponseRedirect:
+    """Ingest due enabled sources once from the dashboard.
+
+    Example:
+        `POST /actions/ingest-sources-run-once/`
+    """
+    result = run_ingest_sources_once_action(limit=_post_int(request, "limit", 20))
+    return _action_redirect(request, result)
+
+
+@require_POST
+def ingest_sources_auto_run_action(request: HttpRequest) -> HttpResponseRedirect:
+    """Queue due source ingestion for the local dashboard worker.
+
+    Example:
+        `POST /actions/ingest-sources-auto-run/`
+    """
+    result = run_ingest_sources_auto_run_action(limit=_post_int(request, "limit", 20))
+    return _action_redirect(request, result)
+
+
+@require_POST
+def sync_catalogs_action(request: HttpRequest) -> HttpResponseRedirect:
+    """Synchronize JSON catalogs into source rows from the dashboard.
+
+    Example:
+        `POST /actions/sync-catalogs/`
+    """
+    result = run_sync_catalogs_action(dry_run=bool(request.POST.get("dry_run")))
     return _action_redirect(request, result)
 
 

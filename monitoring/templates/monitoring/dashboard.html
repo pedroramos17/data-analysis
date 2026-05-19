@@ -1,4 +1,5 @@
 {% extends "monitoring/base.html" %}
+{% load dashboard_tables %}
 
 {% block title %}Operations Dashboard{% endblock %}
 
@@ -29,6 +30,24 @@
       <h3>Discover Sources</h3>
       <input type="number" name="limit" value="200" min="1">
       <button type="submit">Run discovery</button>
+    </form>
+    <form method="post" action="{% url 'monitoring:ingest-sources-run-once-action' %}">
+      {% csrf_token %}
+      <h3>Ingest Due Sources</h3>
+      <input type="number" name="limit" value="20" min="1">
+      <button type="submit">Run once</button>
+    </form>
+    <form method="post" action="{% url 'monitoring:ingest-sources-auto-run-action' %}">
+      {% csrf_token %}
+      <h3>Auto-run Sources</h3>
+      <input type="number" name="limit" value="20" min="1">
+      <button type="submit">Queue auto-run</button>
+    </form>
+    <form method="post" action="{% url 'monitoring:sync-catalogs-action' %}">
+      {% csrf_token %}
+      <h3>Sync Catalogs</h3>
+      <p class="muted">Synchronize bundled JSON catalogs into sources.</p>
+      <button type="submit">Sync catalogs</button>
     </form>
     <form method="post" action="{% url 'monitoring:evaluate-alerts-action' %}">
       {% csrf_token %}
@@ -82,38 +101,11 @@
 <section class="grid">
   <div class="panel">
     <h2>Recent NLP Costs</h2>
-    <table>
-      <thead><tr><th>Entrypoint</th><th>Runtime</th><th>Tokens</th><th>Created</th></tr></thead>
-      <tbody>
-        {% for metric in recent_metrics %}
-          <tr>
-            <td>{{ metric.entrypoint }}</td>
-            <td>{{ metric.total_ms|floatformat:2 }} ms</td>
-            <td>{{ metric.token_count }}</td>
-            <td class="muted">{{ metric.created_at|date:"Y-m-d H:i" }}</td>
-          </tr>
-        {% empty %}
-          <tr><td colspan="4" class="muted">No NLP runs yet.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    {% dashboard_table recent_metrics_table %}
   </div>
   <div class="panel">
     <h2>Recent Exports</h2>
-    <table>
-      <thead><tr><th>Path</th><th>Rows</th><th>Created</th></tr></thead>
-      <tbody>
-        {% for artifact in recent_exports %}
-          <tr>
-            <td><a href="{% url 'monitoring:export-artifact-detail' artifact.id %}">{{ artifact.path }}</a></td>
-            <td>{{ artifact.row_count }}</td>
-            <td class="muted">{{ artifact.created_at|date:"Y-m-d H:i" }}</td>
-          </tr>
-        {% empty %}
-          <tr><td colspan="3" class="muted">No exports yet.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    {% dashboard_table recent_exports_table %}
   </div>
 </section>
 {% endblock %}

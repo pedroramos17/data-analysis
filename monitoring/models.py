@@ -477,6 +477,17 @@ from monitoring.phase2_models import (  # noqa: E402
     TopicCluster,
 )
 from monitoring.operational_models import ExportArtifact, NlpRunMetric  # noqa: E402
+from monitoring.dashboard_models import (  # noqa: E402
+    CloudBudgetPolicy,
+    CloudUsageLedger,
+    ComputeProfileConfig,
+    ComputeProfileTypeSetting,
+    ComputeResourceSnapshot,
+    DashboardSetting,
+    JobRunEvent,
+    PipelineJob,
+)
+from monitoring.orchestration_models import ResourceLock, WorkerHeartbeat  # noqa: E402
 
 EventCluster = TopicCluster
 EventClusterDocument = DocumentTopic

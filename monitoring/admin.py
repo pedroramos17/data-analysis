@@ -8,6 +8,12 @@ from django.utils import timezone
 from monitoring.models import (
     CanonicalEntity,
     CanonicalUrl,
+    CloudBudgetPolicy,
+    CloudUsageLedger,
+    ComputeProfileConfig,
+    ComputeProfileTypeSetting,
+    ComputeResourceSnapshot,
+    DashboardSetting,
     DiscoveryCandidate,
     DocumentEnrichment,
     DailyDigest,
@@ -21,8 +27,10 @@ from monitoring.models import (
     ExportArtifact,
     FetchJob,
     IngestionCheckpoint,
+    JobRunEvent,
     NlpRunMetric,
     NormalizedDocument,
+    PipelineJob,
     RawEvent,
     Source,
     SourceReputationSnapshot,
@@ -371,4 +379,181 @@ class NlpRunMetricAdmin(admin.ModelAdmin):
     search_fields = ("text_hash", "error_message", "model_versions")
 
 
+@admin.register(ComputeProfileTypeSetting)
+class ComputeProfileTypeSettingAdmin(admin.ModelAdmin):
+    """Admin view for editable compute profile type seeds."""
+
+    list_display = (
+        "slug",
+        "label",
+        "enabled",
+        "backend_preference",
+        "allow_cpu",
+        "allow_gpu",
+        "allow_cloud",
+        "budget_guard_enabled",
+        "updated_at",
+    )
+    list_filter = (
+        "enabled",
+        "backend_preference",
+        "allow_cpu",
+        "allow_gpu",
+        "allow_cloud",
+        "budget_guard_enabled",
+    )
+    search_fields = ("slug", "label", "description")
+
+
+
+@admin.register(ComputeProfileConfig)
+class ComputeProfileConfigAdmin(admin.ModelAdmin):
+    """Admin view for dashboard compute profile limits."""
+
+    list_display = (
+        "name",
+        "profile_type",
+        "enabled",
+        "backend_preference",
+        "max_cpu_workers",
+        "max_gpu_workers",
+        "max_vram_gb",
+        "cloud_enabled",
+        "updated_at",
+    )
+    list_filter = (
+        "profile_type",
+        "enabled",
+        "backend_preference",
+        "cloud_enabled",
+        "queue_enabled",
+    )
+    search_fields = ("name", "notes")
+
+
+@admin.register(ComputeResourceSnapshot)
+class ComputeResourceSnapshotAdmin(admin.ModelAdmin):
+    """Admin view for captured compute capabilities."""
+
+    list_display = (
+        "hostname",
+        "profile",
+        "cpu_count",
+        "gpu_available",
+        "gpu_name",
+        "gpu_total_vram_gb",
+        "gpu_free_vram_gb",
+        "cuda_available",
+        "captured_at",
+    )
+    list_filter = (
+        "gpu_available",
+        "cuda_available",
+        "torch_available",
+        "cupy_available",
+        "native_ctypes_available",
+    )
+    readonly_fields = ("captured_at",)
+    search_fields = ("hostname", "gpu_name")
+
+
+@admin.register(PipelineJob)
+class PipelineJobAdmin(admin.ModelAdmin):
+    """Admin view for dashboard-managed pipeline jobs."""
+
+    list_display = (
+        "job_name",
+        "task_name",
+        "profile",
+        "backend",
+        "status",
+        "priority",
+        "progress_percent",
+        "estimated_cost_usd",
+        "created_at",
+        "started_at",
+        "finished_at",
+    )
+    list_filter = ("status", "profile", "backend", "task_name")
+    readonly_fields = ("created_at", "updated_at")
+    search_fields = (
+        "job_name",
+        "task_name",
+        "command",
+        "manifest_path",
+        "log_path",
+        "error_message",
+    )
+
+
+@admin.register(JobRunEvent)
+class JobRunEventAdmin(admin.ModelAdmin):
+    """Admin view for append-only job execution events."""
+
+    list_display = ("job", "event_type", "short_message", "created_at")
+    list_filter = ("event_type", "job__status")
+    readonly_fields = ("created_at",)
+    search_fields = ("message", "job__job_name", "job__task_name")
+
+    def short_message(self, event: JobRunEvent) -> str:
+        """Return a one-line event preview.
+
+        Example:
+            `admin.short_message(event)` truncates long logs.
+        """
+        return event.message[:80]
+
+
+@admin.register(CloudBudgetPolicy)
+class CloudBudgetPolicyAdmin(admin.ModelAdmin):
+    """Admin view for provider-neutral cloud budget policies."""
+
+    list_display = (
+        "name",
+        "provider",
+        "profile",
+        "enabled",
+        "max_total_cost_usd",
+        "max_daily_cost_usd",
+        "max_job_cost_usd",
+        "require_manual_approval",
+        "updated_at",
+    )
+    list_filter = (
+        "enabled",
+        "provider",
+        "require_manual_approval",
+        "stop_when_reached",
+    )
+    search_fields = ("name", "provider")
+
+
+@admin.register(CloudUsageLedger)
+class CloudUsageLedgerAdmin(admin.ModelAdmin):
+    """Admin view for cloud cost and runtime ledger entries."""
+
+    list_display = (
+        "provider",
+        "profile",
+        "job",
+        "usage_date",
+        "cost_estimated_usd",
+        "cost_actual_usd",
+        "runtime_seconds",
+        "created_at",
+    )
+    list_filter = ("provider", "usage_date", "profile")
+    search_fields = ("provider", "job__job_name", "metadata_json")
+
+
+@admin.register(DashboardSetting)
+class DashboardSettingAdmin(admin.ModelAdmin):
+    """Admin view for small dashboard settings."""
+
+    list_display = ("key", "updated_at")
+    readonly_fields = ("updated_at",)
+    search_fields = ("key",)
+
+
 from monitoring import alert_admin as _alert_admin  # noqa: E402,F401
+from monitoring import orchestration_admin as _orchestration_admin  # noqa: E402,F401

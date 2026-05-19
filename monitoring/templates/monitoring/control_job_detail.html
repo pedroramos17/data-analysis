@@ -1,0 +1,62 @@
+{% extends "monitoring/base.html" %}
+
+{% block title %}Job {{ job.id }}{% endblock %}
+
+{% block content %}
+<h1>{{ job.job_name }}</h1>
+<p class="muted">{{ job.task_name }} · {{ job.profile.profile_type }} · {{ job.backend }}</p>
+
+<section class="panel">
+  <h2>Status</h2>
+  <p><strong>{{ job.status }}</strong> · {{ job.progress_percent|floatformat:1 }}%</p>
+  <div class="actions">
+    <form method="post" action="{% url 'monitoring:control-job-action' job.pk 'cancel' %}">{% csrf_token %}<button type="submit">Cancel</button></form>
+    <form method="post" action="{% url 'monitoring:control-job-action' job.pk 'pause' %}">{% csrf_token %}<button type="submit">Pause</button></form>
+    <form method="post" action="{% url 'monitoring:control-job-action' job.pk 'resume' %}">{% csrf_token %}<button type="submit">Resume</button></form>
+    <form method="post" action="{% url 'monitoring:control-job-action' job.pk 'retry' %}">{% csrf_token %}<button type="submit">Retry</button></form>
+    <form method="post" action="{% url 'monitoring:control-job-action' job.pk 'approve' %}">{% csrf_token %}<button type="submit">Approve</button></form>
+    <form method="post" action="{% url 'monitoring:control-job-action' job.pk 'block' %}">{% csrf_token %}<button type="submit">Block</button></form>
+  </div>
+</section>
+
+<section class="grid">
+  <div class="panel">
+    <h2>Command</h2>
+    <pre>{{ job.command }}</pre>
+    <h3>Parameters</h3>
+    <pre>{{ job.parameters_json }}</pre>
+  </div>
+  <div class="panel">
+    <h2>Artifacts</h2>
+    <p><strong>Manifest:</strong>
+      {% if job.manifest_path %}
+        <a href="{% url 'monitoring:control-job-manifest' job.pk %}">{{ job.manifest_path }}</a>
+      {% else %}
+        none
+      {% endif %}
+    </p>
+    <p><strong>Log:</strong> {{ job.log_path|default:"none" }}</p>
+    <p><strong>Estimated:</strong> ${{ job.estimated_cost_usd }}</p>
+    <p><strong>Actual:</strong> ${{ job.actual_cost_usd }}</p>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Logs</h2>
+  <pre>{{ log_text }}</pre>
+</section>
+
+<section class="panel">
+  <h2>Events</h2>
+  <table>
+    <thead><tr><th>Time</th><th>Type</th><th>Message</th></tr></thead>
+    <tbody>
+      {% for event in events %}
+        <tr><td>{{ event.created_at|date:"Y-m-d H:i:s" }}</td><td>{{ event.event_type }}</td><td>{{ event.message }}</td></tr>
+      {% empty %}
+        <tr><td colspan="3" class="muted">No events yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}
