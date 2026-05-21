@@ -1,0 +1,31 @@
+{% extends "monitoring/base.html" %}
+{% load dashboard_tables %}
+
+{% block title %}Dashboard Jobs{% endblock %}
+
+{% block content %}
+<h1>Dashboard Jobs</h1>
+<form method="get" class="filters">
+  <input name="task" value="{{ request.GET.task }}" placeholder="task">
+  <input name="profile" value="{{ request.GET.profile }}" placeholder="profile">
+  <select name="status">
+    <option value="">Any status</option>
+    <option value="queued">Queued</option>
+    <option value="running">Running</option>
+    <option value="failed">Failed</option>
+    <option value="waiting_approval">Waiting approval</option>
+  </select>
+  <select name="backend">
+    <option value="">Any backend</option>
+    <option value="cpu">CPU</option>
+    <option value="gpu">GPU</option>
+    <option value="cloud">Cloud</option>
+  </select>
+  <button type="submit">Filter</button>
+</form>
+
+<section class="panel">
+  {% dashboard_table jobs_table %}
+</section>
+{% include "monitoring/pagination.html" %}
+{% endblock %}

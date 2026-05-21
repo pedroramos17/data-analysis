@@ -1,0 +1,29 @@
+{% extends "monitoring/base.html" %}
+{% load dashboard_tables %}
+
+{% block title %}Dashboard Workers{% endblock %}
+
+{% block content %}
+<h1>Dashboard Workers</h1>
+<form method="post" action="{% url 'monitoring:control-workers-stop-stale' %}" class="actions">
+  {% csrf_token %}
+  <button type="submit">Mark stale workers stopped</button>
+</form>
+
+<section class="panel">
+  <h2>Start Commands</h2>
+  {% for command in commands %}
+    <pre>{{ command }}</pre>
+  {% endfor %}
+</section>
+
+<section class="panel">
+  <h2>Workers</h2>
+  {% dashboard_table workers_table %}
+</section>
+
+<section class="panel">
+  <h2>Active Locks</h2>
+  {% dashboard_table locks_table %}
+</section>
+{% endblock %}

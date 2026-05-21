@@ -1,7 +1,7 @@
 """HTML metadata and article-text parsing helpers."""
 
 from html.parser import HTMLParser
-from typing import override
+from typing_extensions import override
 
 from monitoring.contracts import ParsedRecord
 

@@ -1,0 +1,5 @@
+# Optional ctypes kernels use the Python standard library at runtime.
+# Install a C/C++ compiler through the operating system package manager only if
+# you want to compile native kernels. The project falls back to NumPy when a
+# compiler or native library is missing.
+

@@ -1,0 +1,18 @@
+{% extends "monitoring/base.html" %}
+{% load dashboard_tables %}
+
+{% block title %}Compute Resources{% endblock %}
+
+{% block content %}
+<h1>Compute Resources</h1>
+<form method="post" action="{% url 'monitoring:control-resources-refresh' %}" class="actions">
+  {% csrf_token %}
+  <input name="profile" placeholder="optional profile">
+  <button type="submit">Refresh capabilities</button>
+</form>
+
+<section class="panel">
+  {% dashboard_table snapshots_table %}
+</section>
+{% include "monitoring/pagination.html" %}
+{% endblock %}

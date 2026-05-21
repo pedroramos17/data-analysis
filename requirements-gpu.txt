@@ -1,0 +1,14 @@
+-r requirements.txt
+
+# NumPy is the required CPU fallback for every GPU profile.
+numpy>=1.26
+
+# Install PyTorch from the official selector for the CUDA runtime on the machine:
+# https://pytorch.org/get-started/locally/
+#
+# Install CuPy only when it matches the local CUDA runtime, for example:
+# cupy-cuda12x
+#
+# Do not pin a CUDA wheel here; MX350, RTX 4060 Ti, Colab, and cloud images can
+# require different CUDA runtimes.
+

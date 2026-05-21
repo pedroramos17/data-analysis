@@ -1,6 +1,6 @@
 """URL routes for browsing normalized public-source records."""
 
-from django.urls import path
+from django.urls import include, path
 
 from monitoring import alert_views, candidate_views, export_views, views
 
@@ -8,6 +8,8 @@ app_name = "monitoring"
 
 urlpatterns = [
     path("", views.DashboardView.as_view(), name="dashboard"),
+    path("dashboard/", include("monitoring.dashboard_control_urls")),
+    path("api/dashboard/", include("monitoring.dashboard_api_urls")),
     path("documents/", views.DocumentListView.as_view(), name="document-list"),
     path("alerts/", views.AlertHitListView.as_view(), name="alert-hit-list"),
     path(
@@ -62,6 +64,21 @@ urlpatterns = [
         "actions/discover-sources/",
         views.discover_sources_action,
         name="discover-sources-action",
+    ),
+    path(
+        "actions/ingest-sources-run-once/",
+        views.ingest_sources_run_once_action,
+        name="ingest-sources-run-once-action",
+    ),
+    path(
+        "actions/ingest-sources-auto-run/",
+        views.ingest_sources_auto_run_action,
+        name="ingest-sources-auto-run-action",
+    ),
+    path(
+        "actions/sync-catalogs/",
+        views.sync_catalogs_action,
+        name="sync-catalogs-action",
     ),
     path(
         "actions/evaluate-alerts/",

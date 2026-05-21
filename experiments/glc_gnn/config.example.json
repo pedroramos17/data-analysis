@@ -1,0 +1,8 @@
+{
+  "dataset_path": "exports/local_simple/model_dataset.npz",
+  "output_dir": "exports/experiments/glc_gnn",
+  "epochs": 1,
+  "max_samples": 32,
+  "learning_rate": 0.001
+}
+
