@@ -8,7 +8,7 @@ from django.test import TestCase
 from monitoring.catalog import FeedCatalogRow, load_feed_catalog, validate_feed_catalog
 from monitoring.catalog_sync import sync_worldmonitor_feeds
 from monitoring.dashboard_models import DashboardSetting
-from monitoring.models import Source
+from monitoring.models import Provider, Source
 
 
 class CatalogValidationTests(TestCase):
@@ -65,7 +65,6 @@ class CatalogValidationTests(TestCase):
 
         self.assertEqual(rows[0].name, "Example Feed")
 
-
     def test_catalog_sync_dry_run_does_not_create_sources(self) -> None:
         """Dry-run catalog sync validates rows without writing Source rows."""
         with TemporaryDirectory() as directory_name:
@@ -88,6 +87,19 @@ class CatalogValidationTests(TestCase):
         self.assertFalse(second.changed)
         self.assertEqual(Source.objects.filter(name="Example Feed").count(), 1)
         self.assertEqual(setting.value_json["source_count"], 1)
+
+    def test_catalog_sync_creates_sources_with_providers(self) -> None:
+        """Catalog sync creates source rows with valid provider metadata."""
+        with TemporaryDirectory() as directory_name:
+            catalog_path, domains_path = _write_catalog_files(Path(directory_name))
+            sync_worldmonitor_feeds(False, catalog_path, domains_path)
+
+        source = Source.objects.select_related("provider").get(name="Example Feed")
+
+        self.assertEqual(Provider.objects.count(), 1)
+        self.assertEqual(source.provider.name, "Example Feed")
+        self.assertEqual(source.provider.domain, "example.org")
+        self.assertNotIn(source.provider.name.lower(), {"", "none"})
 
 
 def _catalog_row(

@@ -21,6 +21,8 @@ from monitoring.models import (
     Source,
     SourceReputationSnapshot,
     TopicCluster,
+    TopicClusterSlice,
+    TopicClusterSliceDocument,
 )
 from monitoring.reputation import score_source
 from monitoring.topics import cluster_topics
@@ -165,6 +167,54 @@ class TopicTests(TestCase):
         self.assertEqual(TopicCluster.objects.count(), 1)
         self.assertEqual(DocumentTopic.objects.count(), 2)
 
+    def test_cluster_topics_is_idempotent_when_run_twice(self) -> None:
+        """Repeated clustering reuses the parent topic and time slice."""
+        published_at = timezone.now() - timedelta(hours=2)
+        _document(title="OpenAI breach report", published_at=published_at)
+        _document(title="OpenAI breach response", published_at=published_at)
+
+        first_count = cluster_topics(window_hours=72, min_documents=2, slice_hours=24)
+        second_count = cluster_topics(window_hours=72, min_documents=2, slice_hours=24)
+
+        self.assertEqual(first_count, 1)
+        self.assertEqual(second_count, 1)
+        self.assertEqual(TopicCluster.objects.filter(status="active").count(), 1)
+        self.assertEqual(TopicClusterSlice.objects.count(), 1)
+        self.assertEqual(DocumentTopic.objects.count(), 2)
+        self.assertEqual(TopicClusterSliceDocument.objects.count(), 2)
+
+    def test_later_slice_reuses_parent_topic(self) -> None:
+        """Later matching slices extend the parent topic timeline."""
+        first_time = timezone.now() - timedelta(hours=30)
+        second_time = timezone.now() - timedelta(hours=2)
+        _document(title="OpenAI breach report", published_at=first_time)
+        _document(title="OpenAI breach response", published_at=first_time)
+        _document(title="OpenAI breach update", published_at=second_time)
+        _document(title="OpenAI security response", published_at=second_time)
+
+        cluster_topics(window_hours=72, min_documents=2, slice_hours=24)
+
+        self.assertEqual(TopicCluster.objects.filter(status="active").count(), 1)
+        self.assertEqual(TopicClusterSlice.objects.count(), 2)
+
+    def test_seeded_duplicate_parent_topics_are_merged(self) -> None:
+        """Duplicate active parent topics merge into one audited primary."""
+        published_at = timezone.now() - timedelta(hours=2)
+        document = _document(title="OpenAI breach report", published_at=published_at)
+        other = _document(title="OpenAI breach response", published_at=published_at)
+        primary = _topic_cluster("openai / breach / security", published_at)
+        duplicate = _topic_cluster("openai / breach / security", published_at)
+        DocumentTopic.objects.create(cluster=primary, document=document)
+        DocumentTopic.objects.create(cluster=duplicate, document=other)
+
+        cluster_topics(window_hours=72, min_documents=2, slice_hours=24)
+        duplicate.refresh_from_db()
+
+        self.assertEqual(duplicate.status, TopicCluster.Status.MERGED)
+        self.assertEqual(duplicate.merged_into, primary)
+        self.assertEqual(TopicCluster.objects.filter(status="active").count(), 1)
+        self.assertEqual(DocumentTopic.objects.filter(cluster=primary).count(), 2)
+
     def test_unrelated_documents_do_not_cluster(self) -> None:
         """Unrelated documents below overlap threshold stay unclustered."""
         _document(
@@ -255,4 +305,20 @@ def _document(
         entities=entities or ["OpenAI"],
         tags=["security"],
         dedupe_hash=f"doc-{raw_event.id}",
+    )
+
+
+def _topic_cluster(label: str, seen_at: datetime) -> TopicCluster:
+    offset = timedelta(minutes=TopicCluster.objects.count())
+    return TopicCluster.objects.create(
+        label=label,
+        canonical_title=label,
+        topic_label=label,
+        window_start=seen_at - timedelta(hours=1) + offset,
+        window_end=seen_at + timedelta(hours=1),
+        keywords=["openai", "breach", "security"],
+        entities=["OpenAI"],
+        metadata={"method": "keyword_overlap"},
+        first_seen_at=seen_at,
+        last_seen_at=seen_at,
     )
