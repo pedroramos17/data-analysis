@@ -2,6 +2,7 @@ __pycache__/
 *.py[cod]
 *.sqlite3
 .venv/
+.venv*/
 .pytest_cache/
 .ruff_cache/
 media/raw/
@@ -9,4 +10,6 @@ exports/
 playwright-report/
 runserver.log
 runserver.err
+runserver*.log
+runserver*.err
 server*.log

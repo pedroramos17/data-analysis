@@ -10,7 +10,7 @@ from monitoring.entities import index_document_entities
 from monitoring.enrichment import enrich_document
 from monitoring.models import DeadLetter, NormalizedDocument, RawEvent, Source
 from monitoring.normalizers import build_content_hash, normalize_record
-from monitoring.services.alert_scoring import compute_content_hash, compute_simhash
+from monitoring.services.deduplication import content_hash, simhash_text, url_hash
 from monitoring.snapshots import save_fetch_snapshot
 
 
@@ -123,17 +123,23 @@ def _document_defaults(
     return {
         "source": source,
         "raw_event": raw_event,
+        "url": raw_event.url,
         "canonical_url": record.canonical_url,
+        "url_hash": url_hash(record.canonical_url),
         "title": record.title,
+        "description": record.content[:700],
         "author": record.author,
         "published_at": record.published_at,
+        "fetched_at": raw_event.fetched_at,
         "language": record.language,
         "content": record.content,
         "text": text,
+        "extracted_text": text,
         "entities": list(record.entities),
         "tags": list(record.tags),
-        "content_hash": compute_content_hash(hash_basis),
-        "simhash": compute_simhash(hash_basis),
+        "content_hash": content_hash(hash_basis),
+        "simhash": simhash_text(hash_basis),
+        "status": NormalizedDocument.Status.NORMALIZED,
         "metadata": dict(record.metadata),
     }
 

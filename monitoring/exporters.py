@@ -5,6 +5,10 @@ from pathlib import Path
 
 from django.db.models import QuerySet
 
+from monitoring.comparison_exports import (
+    SUPPORTED_EXPORT_DATASETS,
+    export_dataset_rows,
+)
 from monitoring.models import ExportArtifact, NormalizedDocument
 
 
@@ -82,6 +86,17 @@ def export_documents_artifact(
     return _upsert_export_artifact(written_path, rows)
 
 
+def export_dataset_artifact(dataset: str, output_path: Path) -> ExportArtifact:
+    """Export one comparison-machine dataset and persist artifact metadata.
+
+    Example:
+        `export_dataset_artifact("articles", Path("exports/articles.parquet"))`
+    """
+    rows = export_dataset_rows(dataset)
+    written_path = ArrowTableWriter().write_parquet(rows, output_path)
+    return _upsert_export_artifact(written_path, rows, export_type=dataset)
+
+
 def read_parquet_preview(output_path: Path, limit: int = 25) -> ParquetPreview:
     """Read a bounded Parquet preview for dashboard rendering.
 
@@ -156,10 +171,11 @@ def _missing_arrow_error() -> str:
 def _upsert_export_artifact(
     output_path: Path,
     rows: list[dict[str, object]],
+    export_type: str = "documents",
 ) -> ExportArtifact:
     artifact, _created = ExportArtifact.objects.update_or_create(
         path=str(output_path),
-        defaults=_artifact_defaults(output_path, rows),
+        defaults=_artifact_defaults(output_path, rows, export_type),
     )
     return artifact
 
@@ -167,9 +183,10 @@ def _upsert_export_artifact(
 def _artifact_defaults(
     output_path: Path,
     rows: list[dict[str, object]],
+    export_type: str,
 ) -> dict[str, object]:
     return {
-        "export_type": "documents",
+        "export_type": export_type,
         "row_count": len(rows),
         "byte_size": output_path.stat().st_size if output_path.exists() else 0,
         "schema": _schema_from_rows(rows),

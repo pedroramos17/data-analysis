@@ -67,6 +67,34 @@ python manage.py create_dashboard_jobs --template local_simple_pipeline --profil
 python manage.py dashboard_worker --profile local_cpu_low --worker-id cpu-1
 ```
 
+## Comparison Machine Philosophy
+
+Sourceflow is a comparison machine, not a truth machine. It does not decide
+which article is true, label sources as biased, or infer hidden intent. Its job
+is to make differences in coverage visible, measurable, and explainable.
+
+The comparison pipeline groups feeds under providers and owners, clusters
+articles into event groups, extracts local entity and claim candidates, and
+compares coverage across sources, providers, and owners. Omission detection is
+comparative: it can say that a provider covered an event but did not mention a
+claim or entity that appeared in comparable coverage. It should not say that a
+provider hid the truth.
+
+Local deterministic backends are the default so the MVP can run on SQLite and
+Parquet without heavy infrastructure:
+
+```powershell
+python manage.py ingest_rss --limit 50
+python manage.py enrich_articles --limit 500
+python manage.py cluster_events --window-hours 72
+python manage.py compare_events --limit 100
+python manage.py export_parquet --dataset all --output-dir exports
+```
+
+The first Parquet datasets for analytical workloads are `articles`, `entities`,
+`claims`, `events`, `article_event_links`, `event_coverage`, and
+`event_comparison_snapshots`.
+
 ## Compute Profiles
 
 The project separates safe local work from advanced GPU/cloud work. Use
