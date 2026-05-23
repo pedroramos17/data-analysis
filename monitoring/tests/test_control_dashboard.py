@@ -1,10 +1,10 @@
 """Tests for multi-profile dashboard orchestration."""
 
-from datetime import timedelta
+import json
+from datetime import datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 from tempfile import TemporaryDirectory
-import json
 from unittest.mock import patch
 
 from django.test import TestCase, override_settings
@@ -18,7 +18,7 @@ from monitoring.cloud.budget import (
     get_budget_summary,
 )
 from monitoring.dashboard_models import CloudBudgetPolicy, PipelineJob
-from monitoring.models import Source
+from monitoring.models import NormalizedDocument, RawEvent, Source, TopicCluster
 from monitoring.orchestration.command_validation import validate_management_command
 from monitoring.orchestration.job_templates import create_dashboard_jobs
 from monitoring.orchestration.locks import acquire_lock, cleanup_expired_locks
@@ -30,6 +30,7 @@ from monitoring.orchestration.worker_state import (
     register_worker,
 )
 from monitoring.orchestration_models import ResourceLock, WorkerHeartbeat
+from monitoring.topics import cluster_topics
 
 
 class DashboardOrchestrationTests(TestCase):
@@ -162,7 +163,9 @@ class DashboardBudgetAndTemplateTests(TestCase):
 
     def test_template_dry_run_creates_no_jobs(self) -> None:
         """Dry-run previews do not write PipelineJob rows."""
-        result = create_dashboard_jobs("mx350_micro_gpu_test", "local_mx350_queue", True)
+        result = create_dashboard_jobs(
+            "mx350_micro_gpu_test", "local_mx350_queue", True
+        )
 
         self.assertEqual(result["job_ids"], [])
         self.assertEqual(PipelineJob.objects.count(), 0)
@@ -197,15 +200,41 @@ class DashboardViewAndApiTests(TestCase):
         self.assertIn("Run once", content)
         self.assertIn("Queue auto-run", content)
         self.assertIn("Sync catalogs", content)
+        self.assertIn("Topic slice hours", content)
+        self.assertIn("Update topic slices", content)
         self.assertIn("data-table-shell", content)
+
+    def test_topic_pages_show_parent_and_slice_timeline(self) -> None:
+        """Topic pages show parent rows and slice timeline details."""
+        first_time = timezone.now() - timedelta(hours=2)
+        _document(title="OpenAI breach report", published_at=first_time)
+        _document(title="OpenAI breach response", published_at=first_time)
+        cluster_topics(window_hours=72, min_documents=2, slice_hours=24)
+        cluster = TopicCluster.objects.get()
+
+        list_response = self.client.get(reverse("monitoring:topic-cluster-list"))
+        detail_response = self.client.get(
+            reverse("monitoring:topic-cluster-detail", kwargs={"pk": cluster.pk})
+        )
+
+        self.assertEqual(list_response.status_code, 200)
+        self.assertContains(list_response, "Latest slice")
+        self.assertContains(list_response, "Timeline")
+        self.assertEqual(detail_response.status_code, 200)
+        self.assertContains(detail_response, "Topic timeline")
+        self.assertContains(detail_response, "Slice window")
 
     def test_run_once_sources_action_uses_ingestion_service(self) -> None:
         """Run once ingests due sources without creating a PipelineJob."""
         source = _source("Example Feed")
         FakeIngestionService.ingested_names = []
 
-        with patch("monitoring.dashboard_actions.find_due_sources", return_value=[source]):
-            with patch("monitoring.dashboard_actions.IngestionService", FakeIngestionService):
+        with patch(
+            "monitoring.dashboard_actions.find_due_sources", return_value=[source]
+        ):
+            with patch(
+                "monitoring.dashboard_actions.IngestionService", FakeIngestionService
+            ):
                 response = self.client.post(
                     reverse("monitoring:ingest-sources-run-once-action"),
                     data={"limit": "1"},
@@ -231,7 +260,9 @@ class DashboardViewAndApiTests(TestCase):
         """Catalog sync action delegates to the central sync service."""
         result = CatalogSyncResult("worldmonitor_feeds", 2, False, True, "abc")
 
-        with patch("monitoring.dashboard_actions.sync_catalogs", return_value=(result,)):
+        with patch(
+            "monitoring.dashboard_actions.sync_catalogs", return_value=(result,)
+        ):
             response = self.client.post(reverse("monitoring:sync-catalogs-action"))
 
         self.assertEqual(response.status_code, 302)
@@ -312,6 +343,31 @@ def _source(name: str) -> Source:
         source_type=Source.SourceType.RSS,
         fetch_method=Source.FetchMethod.HTTP,
     )
+
+
+def _document(
+    title: str,
+    published_at: datetime,
+) -> NormalizedDocument:
+    source = _source(f"Topic Source {RawEvent.objects.count()}")
+    raw_event = RawEvent.objects.create(
+        source=source,
+        url=f"https://example.org/topic-{RawEvent.objects.count()}",
+        content_hash=f"topic-raw-{RawEvent.objects.count()}",
+        payload_text="{}",
+    )
+    return NormalizedDocument.objects.create(
+        source=source,
+        raw_event=raw_event,
+        canonical_url=raw_event.url,
+        title=title,
+        published_at=published_at,
+        content="Security breach risk improves with OpenAI response.",
+        entities=["OpenAI"],
+        tags=["security"],
+        dedupe_hash=f"topic-doc-{raw_event.id}",
+    )
+
 
 def _policy(job: PipelineJob) -> CloudBudgetPolicy:
     return CloudBudgetPolicy.objects.create(

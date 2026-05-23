@@ -270,6 +270,21 @@ class TopicCluster(models.Model):
     severity_score = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     confidence_score = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     metadata = models.JSONField(default=dict, blank=True)
+    representative_document = models.ForeignKey(
+        NormalizedDocument,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="representative_events",
+    )
+    merged_into = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="merged_events",
+    )
+    merge_reason = models.JSONField(default=dict, blank=True)
     first_seen_at = models.DateTimeField(default=timezone.now)
     last_seen_at = models.DateTimeField(default=timezone.now)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -288,6 +303,48 @@ class TopicCluster(models.Model):
         return self.label
 
 
+class TopicClusterSlice(models.Model):
+    """A deterministic time slice for one parent topic cluster."""
+
+    cluster = models.ForeignKey(
+        TopicCluster, on_delete=models.CASCADE, related_name="slices"
+    )
+    slice_start = models.DateTimeField()
+    slice_end = models.DateTimeField()
+    slice_hours = models.PositiveIntegerField(default=24)
+    keywords = models.JSONField(default=list, blank=True)
+    entities = models.JSONField(default=list, blank=True)
+    document_count = models.PositiveIntegerField(default=0)
+    source_count = models.PositiveIntegerField(default=0)
+    score = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    novelty_score = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    trend_score = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    severity_score = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    confidence_score = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    metadata = models.JSONField(default=dict, blank=True)
+    first_seen_at = models.DateTimeField(default=timezone.now)
+    last_seen_at = models.DateTimeField(default=timezone.now)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-slice_start"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["cluster", "slice_start", "slice_hours"],
+                name="unique_topic_cluster_slice",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["cluster", "slice_start"]),
+            models.Index(fields=["slice_start", "slice_hours"]),
+        ]
+
+    def __str__(self) -> str:
+        """Return the topic slice label."""
+        return f"{self.cluster_id}:{self.slice_start.isoformat()}"
+
+
 class DocumentTopic(models.Model):
     """Evidence membership edge between a document and event cluster."""
 
@@ -303,6 +360,10 @@ class DocumentTopic(models.Model):
     overlap_score = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     similarity = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     role = models.CharField(max_length=40, choices=Role.choices, default=Role.EVIDENCE)
+    link_reason = models.JSONField(default=dict, blank=True)
+    is_reviewed = models.BooleanField(default=False)
+    is_incorrect = models.BooleanField(default=False)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ["cluster_id", "-overlap_score"]
@@ -315,6 +376,33 @@ class DocumentTopic(models.Model):
     def __str__(self) -> str:
         """Return the document-topic edge label."""
         return f"{self.cluster_id}:{self.document_id}"
+
+
+class TopicClusterSliceDocument(models.Model):
+    """A document membership edge for a specific topic time slice."""
+
+    slice = models.ForeignKey(
+        TopicClusterSlice, on_delete=models.CASCADE, related_name="document_links"
+    )
+    document = models.ForeignKey(NormalizedDocument, on_delete=models.CASCADE)
+    overlap_score = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    similarity = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    role = models.CharField(max_length=40, choices=DocumentTopic.Role.choices)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["slice_id", "-overlap_score"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["slice", "document"],
+                name="unique_topic_slice_document",
+            )
+        ]
+
+    def __str__(self) -> str:
+        """Return the slice-document edge label."""
+        return f"{self.slice_id}:{self.document_id}"
 
 
 class DedupeGroup(models.Model):

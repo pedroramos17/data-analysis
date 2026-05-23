@@ -5,6 +5,13 @@ from django.db.models import QuerySet
 from django.http import HttpRequest
 from django.utils import timezone
 
+from monitoring.comparison_admin import (
+    mark_links_incorrect,
+    merge_events,
+    select_representative_article,
+    split_links_to_new_event,
+)
+from monitoring.discovery import approve_discovery_candidate, reject_discovery_candidate
 from monitoring.models import (
     CanonicalEntity,
     CanonicalUrl,
@@ -13,12 +20,12 @@ from monitoring.models import (
     ComputeProfileConfig,
     ComputeProfileTypeSetting,
     ComputeResourceSnapshot,
-    DashboardSetting,
-    DiscoveryCandidate,
-    DocumentEnrichment,
     DailyDigest,
+    DashboardSetting,
     DeadLetter,
     DigestCache,
+    DiscoveryCandidate,
+    DocumentEnrichment,
     DocumentEntity,
     DocumentTopic,
     DocumentUrlReference,
@@ -35,8 +42,9 @@ from monitoring.models import (
     Source,
     SourceReputationSnapshot,
     TopicCluster,
+    TopicClusterSlice,
+    TopicClusterSliceDocument,
 )
-from monitoring.discovery import approve_discovery_candidate, reject_discovery_candidate
 
 
 @admin.action(description="Disable selected sources")
@@ -107,6 +115,7 @@ class SourceAdmin(admin.ModelAdmin):
 
     list_display = (
         "name",
+        "provider",
         "source_type",
         "category",
         "source_kind",
@@ -119,6 +128,7 @@ class SourceAdmin(admin.ModelAdmin):
     )
     list_filter = (
         "source_type",
+        "provider",
         "category",
         "source_kind",
         "source_tier",
@@ -126,7 +136,7 @@ class SourceAdmin(admin.ModelAdmin):
         "is_enabled",
         "is_dynamic",
     )
-    search_fields = ("name", "url")
+    search_fields = ("name", "url", "provider__name", "provider__owner__name")
     actions = [disable_sources]
 
     def health_status(self, source: Source) -> str:
@@ -312,7 +322,7 @@ class DiscoveryCandidateAdmin(admin.ModelAdmin):
 
 @admin.register(TopicCluster)
 class TopicClusterAdmin(admin.ModelAdmin):
-    """Admin view for rolling topic clusters."""
+    """Admin view for parent topic clusters."""
 
     list_display = (
         "canonical_title",
@@ -325,6 +335,24 @@ class TopicClusterAdmin(admin.ModelAdmin):
     )
     list_filter = ("status",)
     search_fields = ("label", "canonical_title", "keywords", "entities")
+    actions = [merge_events]
+
+
+@admin.register(TopicClusterSlice)
+class TopicClusterSliceAdmin(admin.ModelAdmin):
+    """Admin view for deterministic topic time slices."""
+
+    list_display = (
+        "cluster",
+        "slice_start",
+        "slice_hours",
+        "document_count",
+        "source_count",
+        "score",
+    )
+    list_filter = ("slice_hours",)
+    search_fields = ("cluster__label", "keywords", "entities")
+    readonly_fields = ("metadata",)
 
 
 @admin.register(DocumentTopic)
@@ -332,8 +360,23 @@ class DocumentTopicAdmin(admin.ModelAdmin):
     """Admin view for document-topic memberships."""
 
     list_display = ("cluster", "document", "role", "similarity", "overlap_score")
-    list_filter = ("role",)
+    list_filter = ("role", "is_reviewed", "is_incorrect")
     search_fields = ("cluster__label", "document__title")
+    readonly_fields = ("link_reason",)
+    actions = [
+        mark_links_incorrect,
+        split_links_to_new_event,
+        select_representative_article,
+    ]
+
+
+@admin.register(TopicClusterSliceDocument)
+class TopicClusterSliceDocumentAdmin(admin.ModelAdmin):
+    """Admin view for topic-slice document memberships."""
+
+    list_display = ("slice", "document", "role", "similarity", "overlap_score")
+    list_filter = ("role",)
+    search_fields = ("slice__cluster__label", "document__title")
 
 
 @admin.register(SourceReputationSnapshot)
@@ -403,7 +446,6 @@ class ComputeProfileTypeSettingAdmin(admin.ModelAdmin):
         "budget_guard_enabled",
     )
     search_fields = ("slug", "label", "description")
-
 
 
 @admin.register(ComputeProfileConfig)

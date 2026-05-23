@@ -6,23 +6,41 @@
 <h1>Topics</h1>
 <table>
   <thead>
-    <tr><th>Topic</th><th>Documents</th><th>Score</th><th>Keywords</th><th>Window</th></tr>
+    <tr>
+      <th>Topic</th>
+      <th>Documents</th>
+      <th>Sources</th>
+      <th>Slices</th>
+      <th>Latest slice</th>
+      <th>Keywords</th>
+      <th>Timeline</th>
+    </tr>
   </thead>
   <tbody>
     {% for cluster in topic_clusters %}
       <tr>
-        <td>{{ cluster.label }}</td>
+        <td>{{ cluster.canonical_title|default:cluster.label }}</td>
         <td>{{ cluster.document_count }}</td>
-        <td>{{ cluster.score }}</td>
+        <td>{{ cluster.source_count }}</td>
+        <td>{{ cluster.slices.count }}</td>
+        <td class="muted">
+          {% with latest_slice=cluster.slices.first %}
+            {% if latest_slice %}
+              {{ latest_slice.slice_start|date:"Y-m-d H:i" }} - {{ latest_slice.slice_end|date:"Y-m-d H:i" }}
+            {% else %}
+              No slices
+            {% endif %}
+          {% endwith %}
+        </td>
         <td>
           {% for keyword in cluster.keywords|slice:":6" %}
             <span class="pill">{{ keyword }}</span>
           {% endfor %}
         </td>
-        <td class="muted">{{ cluster.window_start|date:"Y-m-d H:i" }} - {{ cluster.window_end|date:"Y-m-d H:i" }}</td>
+        <td><a href="{% url 'monitoring:topic-cluster-detail' cluster.pk %}">Timeline</a></td>
       </tr>
     {% empty %}
-      <tr><td colspan="5" class="muted">No topic clusters found.</td></tr>
+      <tr><td colspan="7" class="muted">No topic clusters found.</td></tr>
     {% endfor %}
   </tbody>
 </table>

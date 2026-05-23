@@ -52,6 +52,11 @@ urlpatterns = [
         name="export-artifact-rows-api",
     ),
     path("topics/", views.TopicClusterListView.as_view(), name="topic-cluster-list"),
+    path(
+        "topics/<int:pk>/",
+        views.TopicClusterDetailView.as_view(),
+        name="topic-cluster-detail",
+    ),
     path("sources/", views.SourceListView.as_view(), name="source-list"),
     path("sources/<int:pk>/", views.SourceDetailView.as_view(), name="source-detail"),
     path("failures/", views.DeadLetterListView.as_view(), name="dead-letter-list"),

@@ -99,6 +99,55 @@
       gap: 8px;
       align-items: end;
     }
+    .field-stack {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .field-label {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .tooltip {
+      position: relative;
+      display: inline-grid;
+      place-items: center;
+      width: 18px;
+      height: 18px;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      color: var(--muted);
+      background: var(--surface);
+      cursor: help;
+      font-size: 12px;
+      text-transform: none;
+    }
+    .tooltip-text {
+      position: absolute;
+      left: 0;
+      top: 24px;
+      z-index: 5;
+      display: none;
+      width: min(260px, 70vw);
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--ink);
+      background: var(--panel);
+      box-shadow: 0 8px 20px rgb(23 32 42 / 12%);
+      font-size: 12px;
+      font-weight: 400;
+      text-transform: none;
+    }
+    .tooltip:hover .tooltip-text,
+    .tooltip:focus .tooltip-text {
+      display: block;
+    }
     .messages {
       display: grid;
       gap: 8px;
