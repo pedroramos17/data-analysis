@@ -1,0 +1,113 @@
+{% extends "monitoring/base.html" %}
+
+{% block title %}Sourceflow Intelligence{% endblock %}
+
+{% block content %}
+<h1>Sourceflow Intelligence</h1>
+<p class="muted">Inspect comparison/propagation factors, Parquet value artifacts, and forward-usefulness evaluations.</p>
+
+<section class="grid" aria-label="Intelligence registry counts">
+  <div class="panel"><div class="stat">{{ summary.factor_count }}</div><div class="muted">Registered factors</div></div>
+  <div class="panel"><div class="stat">{{ summary.artifact_count }}</div><div class="muted">Value artifacts</div></div>
+  <div class="panel"><div class="stat">{{ summary.evaluation_count }}</div><div class="muted">Evaluations</div></div>
+  <div class="panel"><h2>Factor Registry</h2><p><a href="{% url 'monitoring:intelligence-factor-list' %}">Open registered factors</a></p></div>
+</section>
+
+<section class="panel">
+  <h2>Run Local Workflows</h2>
+  <div class="grid">
+    <form method="post" action="{% url 'monitoring:intelligence-register-action' %}">
+      {% csrf_token %}
+      <h3>Register Seeds</h3>
+      <p class="muted">Upsert typed seed formulas and dependencies.</p>
+      <button type="submit">Register factors</button>
+    </form>
+
+    <form method="post" action="{% url 'monitoring:intelligence-compute-action' %}">
+      {% csrf_token %}
+      <h3>Compute Values</h3>
+      <input type="text" name="as_of" placeholder="as_of ISO, blank = now">
+      <input type="text" name="history_start" placeholder="history_start ISO">
+      <input type="text" name="history_end" placeholder="history_end ISO">
+      <button type="submit">Compute seeds</button>
+    </form>
+
+    <form method="post" action="{% url 'monitoring:intelligence-search-action' %}">
+      {% csrf_token %}
+      <h3>Random Search</h3>
+      <input type="number" name="count" value="500" min="1" max="5000">
+      <input type="number" name="seed" value="7" min="1">
+      <button type="submit">Generate formulas</button>
+    </form>
+
+    <form method="post" action="{% url 'monitoring:intelligence-evaluate-action' %}">
+      {% csrf_token %}
+      <h3>Evaluate Factor</h3>
+      <select name="factor">
+        {% for factor in factors %}
+          <option value="{{ factor.name }}">{{ factor.name }}</option>
+        {% empty %}
+          <option value="coverage_intensity">coverage_intensity</option>
+        {% endfor %}
+      </select>
+      <select name="objective">
+        {% for objective in objectives %}
+          <option value="{{ objective }}">{{ objective }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit">Evaluate</button>
+    </form>
+  </div>
+</section>
+
+{% if formula_preview %}
+  <section class="panel">
+    <h2>Latest Formula Preview</h2>
+    <table>
+      <thead><tr><th>#</th><th>Formula text</th></tr></thead>
+      <tbody>
+        {% for formula in formula_preview %}
+          <tr><td>{{ forloop.counter }}</td><td>{{ formula }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+{% endif %}
+
+<section class="grid">
+  <div class="panel">
+    <h2>Latest Value Artifacts</h2>
+    <table>
+      <thead><tr><th>Factor</th><th>Rows</th><th>Created</th></tr></thead>
+      <tbody>
+        {% for artifact in latest_artifacts %}
+          <tr>
+            <td><a href="{% url 'monitoring:intelligence-factor-detail' artifact.factor_name %}">{{ artifact.factor_name }}</a></td>
+            <td>{{ artifact.row_count }}</td>
+            <td class="muted">{{ artifact.created_at }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="3" class="muted">No factor value artifacts yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="panel">
+    <h2>Recent Evaluations</h2>
+    <table>
+      <thead><tr><th>Factor</th><th>Objective</th><th>Score</th></tr></thead>
+      <tbody>
+        {% for evaluation in recent_evaluations %}
+          <tr>
+            <td>{{ evaluation.factor_name }}</td>
+            <td>{{ evaluation.objective }}</td>
+            <td>{{ evaluation.score|floatformat:3 }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="3" class="muted">No evaluations yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

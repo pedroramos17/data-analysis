@@ -7,6 +7,7 @@ __pycache__/
 .ruff_cache/
 media/raw/
 exports/
+data/graphrag_context/
 playwright-report/
 runserver.log
 runserver.err

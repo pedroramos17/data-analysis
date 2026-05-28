@@ -1,0 +1,44 @@
+{% extends "monitoring/base.html" %}
+
+{% block title %}Symbolic Factors{% endblock %}
+
+{% block content %}
+<h1>Symbolic Factors</h1>
+<p class="muted">Registered formulas for comparison/propagation scoring over Sourceflow metadata.</p>
+
+<section class="panel">
+  <div class="actions">
+    <a href="{% url 'monitoring:intelligence-dashboard' %}">Back to Intelligence</a>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Entity</th>
+        <th>Formula</th>
+        <th>Dependencies</th>
+        <th>Explanation</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in factor_rows %}
+        <tr>
+          <td><a href="{% url 'monitoring:intelligence-factor-detail' row.name %}">{{ row.name }}</a></td>
+          <td>{{ row.entity_type }}</td>
+          <td><code>{{ row.formula }}</code></td>
+          <td>
+            {% for dependency in row.dependencies %}
+              <span class="pill">{{ dependency }}</span>
+            {% empty %}
+              <span class="muted">No factor dependencies</span>
+            {% endfor %}
+          </td>
+          <td>{{ row.explanation }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5" class="muted">No symbolic factors registered yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

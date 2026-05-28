@@ -160,6 +160,11 @@
       color: var(--success);
       background: #f0fbf3;
     }
+    .message.error {
+      border-color: #f2b8b5;
+      color: #b42318;
+      background: #fff4f2;
+    }
     pre {
       overflow: auto;
       padding: 12px;
@@ -277,6 +282,7 @@
       <a href="{% url 'monitoring:alert-hit-list' %}">Alerts</a>
       <a href="{% url 'monitoring:topic-cluster-list' %}">Topics</a>
       <a href="{% url 'monitoring:source-list' %}">Sources</a>
+      <a href="{% url 'monitoring:intelligence-dashboard' %}">Intelligence</a>
       <a href="{% url 'monitoring:discovery-candidate-list' %}">Candidates</a>
       <a href="{% url 'monitoring:dead-letter-list' %}">Failures</a>
       <a href="{% url 'monitoring:export-artifact-list' %}">Exports</a>
@@ -288,7 +294,7 @@
     {% if messages %}
       <div class="messages">
         {% for message in messages %}
-          <div class="message">{{ message }}</div>
+          <div class="message {{ message.tags }}">{{ message }}</div>
         {% endfor %}
       </div>
     {% endif %}

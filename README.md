@@ -180,3 +180,54 @@ PyTorch, CuPy, Celery, Redis, and cloud execution remain optional.
   in-app alert rules, deterministic topic clusters, canonical URL references,
   and source reputation snapshots. Alert review is available at `/alerts/` and
   topic clusters are available at `/topics/`.
+
+## Symbolic Factor Mining
+
+Sourceflow includes a local Symbolic Factor Mining subsystem for source
+intelligence comparison and propagation analysis. It stores typed formula
+metadata, dependencies, evaluations, and run records in SQLite, while
+materialized factor values remain Parquet-first under `exports/factors/`.
+The subsystem avoids truth judgments and explains signals as coverage
+asymmetry, provider concentration, framing divergence, evidence density, claim
+disagreement, possible omission, and amplification patterns.
+
+Example commands:
+
+```powershell
+python manage.py init_factor_base
+python manage.py register_seed_factors
+python manage.py compute_factors --as-of 2026-05-28T12:00:00Z
+python manage.py search_symbolic_factors --method random --n 500 --max-depth 4 --objective future_event_growth --window 7d
+python manage.py search_symbolic_factors --method gp --population 100 --generations 20 --objective future_claim_conflict --max-depth 5
+python manage.py evaluate_factors --factor coverage_intensity --objective future_event_growth
+python manage.py explain_factor_score --factor coverage_intensity --entity-id event:1
+python manage.py build_graphrag_context --recent 100
+```
+
+Example formula JSON:
+
+```json
+{
+  "kind": "binary",
+  "name": "div_safe",
+  "left": {"kind": "operand", "name": "article_count", "return_type": "numeric"},
+  "right": {"kind": "constant", "value": 1.0, "return_type": "numeric"}
+}
+```
+
+Example GraphRAG context output:
+
+```json
+{
+  "event_id": 42,
+  "event_title": "Example event",
+  "top_sources": ["Source A", "Source B"],
+  "top_providers": ["Provider A"],
+  "top_factor_scores": [
+    {
+      "name": "coverage_intensity",
+      "explanation": "Compares coverage by one source against peer coverage for the same event."
+    }
+  ]
+}
+```
