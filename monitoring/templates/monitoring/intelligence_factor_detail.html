@@ -1,0 +1,121 @@
+{% extends "monitoring/base.html" %}
+
+{% block title %}{{ factor.name }}{% endblock %}
+
+{% block content %}
+<h1>{{ factor.name }}</h1>
+<p class="muted">{{ factor.description }}</p>
+
+<section class="grid">
+  <div class="panel">
+    <h2>Formula</h2>
+    <p><strong>Entity type:</strong> {{ factor.entity_type }}</p>
+    <p><strong>Value type:</strong> {{ factor.value_type }}</p>
+    <p><code>{{ formula }}</code></p>
+  </div>
+  <div class="panel">
+    <h2>XAI Explanation</h2>
+    <p>{{ explanation }}</p>
+    <p class="muted">Interpretable comparison factor for propagation usefulness only.</p>
+  </div>
+</section>
+
+<section class="grid">
+  <div class="panel">
+    <h2>Dependencies</h2>
+    {% for dependency in dependencies %}
+      <span class="pill">{{ dependency }}</span>
+    {% empty %}
+      <p class="muted">No factor dependencies.</p>
+    {% endfor %}
+  </div>
+  <div class="panel">
+    <h2>Latest Artifact</h2>
+    {% if latest_artifact %}
+      <p><strong>Rows:</strong> {{ latest_artifact.row_count }}</p>
+      <p><strong>As of:</strong> {{ latest_artifact.as_of }}</p>
+      <p class="muted">{{ latest_artifact.parquet_path }}</p>
+    {% else %}
+      <p class="muted">No value artifact has been written for this factor.</p>
+    {% endif %}
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Formula JSON</h2>
+  <pre>{{ formula_json }}</pre>
+</section>
+
+<section class="panel">
+  <h2>Value Preview</h2>
+  <div class="actions">
+    <input id="factor-search" type="search" placeholder="Search rows">
+    <select id="factor-page-size">
+      <option value="10">10 rows</option>
+      <option value="25" selected>25 rows</option>
+      <option value="50">50 rows</option>
+    </select>
+    <button id="factor-refresh" type="button">Refresh</button>
+  </div>
+  <p id="factor-count" class="muted">{{ preview.error|default:"Loading factor rows..." }}</p>
+  <div class="table-scroll">
+    <table id="factor-table">
+      <thead></thead>
+      <tbody><tr><td class="muted">Loading factor rows...</td></tr></tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Artifact History</h2>
+  <table>
+    <thead><tr><th>ID</th><th>Rows</th><th>As of</th><th>Path</th></tr></thead>
+    <tbody>
+      {% for artifact in artifacts %}
+        <tr>
+          <td>{{ artifact.id }}</td>
+          <td>{{ artifact.row_count }}</td>
+          <td>{{ artifact.as_of }}</td>
+          <td class="muted">{{ artifact.parquet_path }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4" class="muted">No artifacts recorded.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<script>
+  const factorRowsUrl = "{% url 'monitoring:intelligence-factor-rows-api' factor.name %}";
+  const factorTable = document.getElementById("factor-table");
+  const factorSearch = document.getElementById("factor-search");
+  const factorPageSize = document.getElementById("factor-page-size");
+  const factorCount = document.getElementById("factor-count");
+
+  async function loadFactorRows() {
+    const params = new URLSearchParams({search: factorSearch.value, page_size: factorPageSize.value});
+    const response = await fetch(`${factorRowsUrl}?${params}`);
+    const payload = await response.json();
+    renderFactorRows(payload.columns, payload.rows);
+    factorCount.textContent = payload.error || `${payload.total} matching rows`;
+  }
+
+  function renderFactorRows(columns, rows) {
+    factorTable.querySelector("thead").innerHTML = `<tr>${columns.map(column => `<th>${escapeHtml(column)}</th>`).join("")}</tr>`;
+    factorTable.querySelector("tbody").innerHTML = rows.length ? rows.map(row => factorRowHtml(columns, row)).join("") : `<tr><td class="muted">No rows found.</td></tr>`;
+  }
+
+  function factorRowHtml(columns, row) {
+    return `<tr>${columns.map(column => `<td>${escapeHtml(String(row[column] ?? "").slice(0, 180))}</td>`).join("")}</tr>`;
+  }
+
+  function escapeHtml(value) {
+    return value.replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[character]));
+  }
+
+  document.getElementById("factor-refresh").addEventListener("click", loadFactorRows);
+  factorSearch.addEventListener("input", loadFactorRows);
+  factorPageSize.addEventListener("change", loadFactorRows);
+  loadFactorRows();
+</script>
+{% endblock %}
