@@ -18,12 +18,34 @@ python -m pip install -r requirements.txt
 python -m playwright install chromium
 python manage.py migrate
 python manage.py load_worldmonitor_feeds
-$env:MONITOR_ADMIN_USERNAME="admin"
-$env:MONITOR_ADMIN_EMAIL="admin@example.local"
-$env:MONITOR_ADMIN_PASSWORD="<choose-a-password>"
-python manage.py create_admin_user
-python manage.py runserver
+python manage.py seed_dev_admin --show-credentials
+python manage.py runserver 127.0.0.1:8000 --noreload
 ```
+
+## Development Admin User
+
+For local development, create a Django admin user with an idempotent seed:
+
+```powershell
+python manage.py migrate
+python manage.py seed_dev_admin --show-credentials
+```
+
+Default local credentials are enabled only while `DEBUG=True`:
+
+```text
+URL: http://127.0.0.1:8000/admin/
+username: admin
+password: admin12345
+```
+
+Override credentials with `DEV_ADMIN_USERNAME`, `DEV_ADMIN_EMAIL`, and
+`DEV_ADMIN_PASSWORD`, or pass `--username`, `--email`, and `--password`. The
+command refuses non-debug environments unless `--allow-production` is passed,
+and production mode never accepts the fallback password.
+
+The older `create_admin_user` command remains available for deployments that
+already use `MONITOR_ADMIN_*` variables.
 
 ## Common Commands
 
@@ -40,7 +62,107 @@ python manage.py evaluate_alerts --lookback-hours 24
 python manage.py cluster_topics --window-hours 72 --min-documents 3
 python manage.py score_source_reputation --window-days 30
 python manage.py export_parquet --output exports\\documents.parquet
+python manage.py inspect_compute --profile local_cpu_low
+python manage.py create_dashboard_jobs --template local_simple_pipeline --profile local_cpu_low
+python manage.py dashboard_worker --profile local_cpu_low --worker-id cpu-1
 ```
+
+## Comparison Machine Philosophy
+
+Sourceflow is a comparison machine, not a truth machine. It does not decide
+which article is true, label sources as biased, or infer hidden intent. Its job
+is to make differences in coverage visible, measurable, and explainable.
+
+The comparison pipeline groups feeds under providers and owners, clusters
+articles into event groups, extracts local entity and claim candidates, and
+compares coverage across sources, providers, and owners. Omission detection is
+comparative: it can say that a provider covered an event but did not mention a
+claim or entity that appeared in comparable coverage. It should not say that a
+provider hid the truth.
+
+Local deterministic backends are the default so the MVP can run on SQLite and
+Parquet without heavy infrastructure:
+
+```powershell
+python manage.py ingest_rss --limit 50
+python manage.py enrich_articles --limit 500
+python manage.py cluster_events --window-hours 72
+python manage.py compare_events --limit 100
+python manage.py export_parquet --dataset all --output-dir exports
+```
+
+The first Parquet datasets for analytical workloads are `articles`, `entities`,
+`claims`, `events`, `article_event_links`, `event_coverage`, and
+`event_comparison_snapshots`.
+
+## Compute Profiles
+
+The project separates safe local work from advanced GPU/cloud work. Use
+`local_cpu_low` for weak notebooks, `local_mx350_queue` only for micro-batch
+GPU smoke tests, `local_rtx4060ti` for strong local GPU runs, and
+`cloud_student` or `cloud_serverless_on_demand` for large partitioned jobs.
+
+See:
+
+- [Compute profiles](docs/compute_profiles.md)
+- [Low-end local setup](docs/local_low_end_setup.md)
+- [Cloud student setup](docs/cloud_student_setup.md)
+- [Control dashboard](docs/control_dashboard.md)
+
+## Control Dashboard
+
+The multi-profile control dashboard is available at:
+
+```text
+http://127.0.0.1:8000/dashboard/
+```
+
+It manages SQLite-backed `PipelineJob` rows, local workers, resource locks,
+resource snapshots, cloud budget policies, usage estimates, logs, manifests,
+and generated artifacts. It does not require Celery, Redis, PyTorch, CuPy, or
+cloud SDKs.
+
+Start workers from separate terminals:
+
+```powershell
+python manage.py dashboard_worker --profile local_cpu_low --worker-id cpu-1
+python manage.py dashboard_worker --profile local_mx350_queue --worker-id mx350-1
+python manage.py dashboard_worker --profile local_rtx4060ti --worker-id gpu-1
+```
+
+Create jobs from safe templates:
+
+```powershell
+python manage.py create_dashboard_jobs --template local_simple_pipeline --profile local_cpu_low
+python manage.py create_dashboard_jobs --template cloud_student_advanced_plan --profile cloud_student --dry-run
+```
+
+Cloud jobs are manifest-based and provider-neutral. They are blocked by a
+budget policy and, by default, remain `waiting_approval` until explicitly
+approved:
+
+```powershell
+python manage.py cloud_budget_summary
+python manage.py approve_cloud_job --job-id 123 --approved-by local-admin
+python manage.py block_cloud_job --job-id 123 --reason "over budget"
+```
+
+Operating concept: local CPU validates data and simple features; MX350 runs
+only micro-batches; RTX accelerates bounded local GPU work; cloud profiles
+scale partitioned advanced jobs with budget guards.
+
+## CI/CD Patterns
+
+GitHub Actions workflows live in `.github/workflows/`:
+
+- `ci.yml` runs Django checks, migration drift checks, migrations, tests, and
+  lightweight dashboard/compute smoke checks on pushes and pull requests.
+- `release-preview.yml` is a manual `workflow_dispatch` preview that validates
+  the project and uploads a small diagnostic artifact without deploying or
+  running cloud jobs.
+
+The workflows install only the lightweight core requirements. Provider SDKs,
+PyTorch, CuPy, Celery, Redis, and cloud execution remain optional.
 
 ## Safety Boundaries
 

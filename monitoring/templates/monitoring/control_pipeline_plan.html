@@ -1,0 +1,49 @@
+{% extends "monitoring/base.html" %}
+{% load dashboard_tables %}
+
+{% block title %}Pipeline Plan{% endblock %}
+
+{% block content %}
+<h1>Pipeline Plan</h1>
+<section class="panel">
+  <form method="post">
+    {% csrf_token %}
+    <div class="grid">
+      <label>Template
+        <select name="template">
+          {% for template in templates %}
+            <option value="{{ template }}">{{ template }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Profile <input name="profile" value="{{ selected_profile|default:'local_cpu_low' }}"></label>
+      <label>Partition <input name="partition" value="monthly"></label>
+      <label>Provider <input name="provider" value="provider_neutral"></label>
+      <label>Max cost/job <input name="max_job_cost_usd" value="0"></label>
+      <label>Max daily cost <input name="max_daily_cost_usd" value="0"></label>
+      <label>Max total cost <input name="max_total_cost_usd" value="0"></label>
+      <label>Max runtime hours <input name="max_runtime_hours" value="4"></label>
+      <label>Require approval <input type="checkbox" name="require_manual_approval" value="1" checked></label>
+    </div>
+    <input type="hidden" name="cloud_budget_policy" value="1">
+    <div class="actions">
+      <button type="submit">Preview</button>
+      <button type="submit" name="create" value="1">Create as waiting approval</button>
+    </div>
+  </form>
+</section>
+
+{% if preview_table %}
+  <section class="panel">
+    <h2>Preview</h2>
+    {% dashboard_table preview_table %}
+  </section>
+{% endif %}
+
+{% if result %}
+  <section class="panel">
+    <h2>Created Jobs</h2>
+    <pre>{{ result }}</pre>
+  </section>
+{% endif %}
+{% endblock %}

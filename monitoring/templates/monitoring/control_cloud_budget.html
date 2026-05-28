@@ -1,0 +1,71 @@
+{% extends "monitoring/base.html" %}
+{% load dashboard_tables %}
+
+{% block title %}Cloud Budget{% endblock %}
+
+{% block content %}
+<h1>Cloud Budget</h1>
+<section class="panel">
+  <h2>Cloud jobs require a budget policy and approval.</h2>
+  <p class="muted">Provider costs are estimated locally. No provider billing API is used.</p>
+</section>
+
+<section class="panel">
+  <h2>Budget Summary Table</h2>
+  {% dashboard_table summaries_table %}
+</section>
+
+<section class="grid">
+  {% for summary in summaries %}
+    <div class="panel">
+      <h2>{{ summary.policy }}</h2>
+      <p>Daily limit: ${{ summary.max_daily_cost_usd }}</p>
+      <p>Total limit: ${{ summary.max_total_cost_usd }}</p>
+      <p>Estimated used: ${{ summary.estimated_used_usd }}</p>
+      <p>Actual used: ${{ summary.actual_used_usd }}</p>
+      <p>Remaining: ${{ summary.remaining_total_usd }}</p>
+      <p>Waiting approval: {{ summary.jobs_waiting_approval }}</p>
+      <p>Blocked: {{ summary.jobs_blocked }}</p>
+    </div>
+  {% empty %}
+    <div class="panel muted">No budget policies yet.</div>
+  {% endfor %}
+</section>
+
+<section class="panel">
+  <h2>Jobs Waiting Approval</h2>
+  <table>
+    <thead><tr><th>Job</th><th>Task</th><th>Cost</th><th>Action</th></tr></thead>
+    <tbody>
+      {% for job in waiting_jobs %}
+        <tr>
+          <td><a href="{% url 'monitoring:control-job-detail' job.pk %}">{{ job.job_name }}</a></td>
+          <td>{{ job.task_name }}</td>
+          <td>${{ job.estimated_cost_usd }}</td>
+          <td>
+            <form method="post" action="{% url 'monitoring:control-job-action' job.pk 'approve' %}">
+              {% csrf_token %}<button type="submit">Approve</button>
+            </form>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4" class="muted">No jobs waiting approval.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="panel">
+  <h2>Blocked Jobs</h2>
+  <table>
+    <thead><tr><th>Job</th><th>Task</th><th>Status</th></tr></thead>
+    <tbody>
+      {% for job in blocked_jobs %}
+        <tr><td>{{ job.job_name }}</td><td>{{ job.task_name }}</td><td>{{ job.status }}</td></tr>
+      {% empty %}
+        <tr><td colspan="3" class="muted">No blocked jobs.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

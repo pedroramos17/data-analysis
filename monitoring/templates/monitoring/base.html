@@ -99,6 +99,55 @@
       gap: 8px;
       align-items: end;
     }
+    .field-stack {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .field-label {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .tooltip {
+      position: relative;
+      display: inline-grid;
+      place-items: center;
+      width: 18px;
+      height: 18px;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      color: var(--muted);
+      background: var(--surface);
+      cursor: help;
+      font-size: 12px;
+      text-transform: none;
+    }
+    .tooltip-text {
+      position: absolute;
+      left: 0;
+      top: 24px;
+      z-index: 5;
+      display: none;
+      width: min(260px, 70vw);
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--ink);
+      background: var(--panel);
+      box-shadow: 0 8px 20px rgb(23 32 42 / 12%);
+      font-size: 12px;
+      font-weight: 400;
+      text-transform: none;
+    }
+    .tooltip:hover .tooltip-text,
+    .tooltip:focus .tooltip-text {
+      display: block;
+    }
     .messages {
       display: grid;
       gap: 8px;
@@ -150,6 +199,56 @@
       max-width: 320px;
       overflow-wrap: anywhere;
     }
+    .data-table-shell {
+      overflow: auto;
+      max-height: 70vh;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      resize: horizontal;
+      min-width: min(100%, 320px);
+      max-width: 100%;
+    }
+    .data-table {
+      min-width: max-content;
+      table-layout: fixed;
+    }
+    .data-table th {
+      position: sticky;
+      top: 0;
+      background: var(--panel);
+      z-index: 1;
+      white-space: nowrap;
+    }
+    .data-table td {
+      min-width: 110px;
+      max-width: 420px;
+      overflow-wrap: anywhere;
+    }
+    .data-table-caption {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      color: var(--muted);
+      background: var(--surface);
+    }
+    .column-resizer {
+      float: right;
+      width: 8px;
+      min-height: 22px;
+      margin: -3px -5px -3px 8px;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      cursor: col-resize;
+    }
+    .column-resizer::after {
+      content: "";
+      display: block;
+      width: 1px;
+      height: 18px;
+      margin: 2px auto;
+      background: var(--border);
+    }
     .muted { color: var(--muted); }
     .pill {
       display: inline-block;
@@ -177,6 +276,7 @@
   <header>
     <nav>
       <strong><a href="{% url 'monitoring:dashboard' %}">Public Source Monitor</a></strong>
+      <a href="{% url 'monitoring:control-dashboard' %}">Control</a>
       <a href="{% url 'monitoring:document-list' %}">Documents</a>
       <a href="{% url 'monitoring:feed-digest' %}">Digest</a>
       <a href="{% url 'monitoring:alert-hit-list' %}">Alerts</a>
@@ -186,6 +286,7 @@
       <a href="{% url 'monitoring:discovery-candidate-list' %}">Candidates</a>
       <a href="{% url 'monitoring:dead-letter-list' %}">Failures</a>
       <a href="{% url 'monitoring:export-artifact-list' %}">Exports</a>
+      <a href="{% url 'monitoring:control-jobs' %}">Jobs</a>
       <a href="/admin/">Admin</a>
     </nav>
   </header>
@@ -199,5 +300,36 @@
     {% endif %}
     {% block content %}{% endblock %}
   </main>
+
+  <script>
+    function initializeDashboardTables() {
+      document.querySelectorAll(".data-table-shell").forEach(function(shell) {
+        var tableId = shell.dataset.tableId || "dashboard-table";
+        shell.querySelectorAll("th").forEach(function(header, index) {
+          var saved = localStorage.getItem("table-width:" + tableId + ":" + index);
+          if (saved) { header.style.width = saved + "px"; }
+          var handle = header.querySelector(".column-resizer");
+          if (!handle) { return; }
+          handle.addEventListener("pointerdown", function(event) {
+            event.preventDefault();
+            var startX = event.clientX;
+            var startWidth = header.offsetWidth;
+            function resize(moveEvent) {
+              var nextWidth = Math.max(80, startWidth + moveEvent.clientX - startX);
+              header.style.width = nextWidth + "px";
+              localStorage.setItem("table-width:" + tableId + ":" + index, String(nextWidth));
+            }
+            function stop() {
+              document.removeEventListener("pointermove", resize);
+              document.removeEventListener("pointerup", stop);
+            }
+            document.addEventListener("pointermove", resize);
+            document.addEventListener("pointerup", stop);
+          });
+        });
+      });
+    }
+    document.addEventListener("DOMContentLoaded", initializeDashboardTables);
+  </script>
 </body>
 </html>

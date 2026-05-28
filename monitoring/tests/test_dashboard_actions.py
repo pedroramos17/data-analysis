@@ -5,10 +5,12 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
+from monitoring.dashboard_actions import run_ingest_sources_once_action
 from monitoring.models import (
     AlertHit,
     DiscoveryCandidate,
@@ -31,6 +33,33 @@ class DashboardActionTests(TestCase):
         self.assertEqual(dashboard_response.status_code, 200)
         self.assertContains(dashboard_response, "Operations Dashboard")
         self.assertEqual(documents_response.status_code, 200)
+
+    def test_dashboard_action_fields_have_labels_and_tooltips(self) -> None:
+        """Maintenance controls explain each field and action."""
+        response = self.client.get(reverse("monitoring:dashboard"))
+        content = response.content.decode()
+
+        expected_labels = (
+            "Document limit",
+            "Force re-enrich",
+            "Source discovery limit",
+            "Due source limit",
+            "Auto-run source limit",
+            "Alert lookback hours",
+            "Topic window hours",
+            "Topic slice hours",
+            "Minimum documents",
+            "Reputation window days",
+            "NLP text",
+            "NLP task set",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        for label in expected_labels:
+            self.assertIn(label, content)
+        self.assertIn('class="tooltip"', content)
+        self.assertIn('aria-label="Explain Topic slice hours"', content)
+        self.assertIn("Update topic slices", content)
 
     def test_dashboard_post_actions_redirect(self) -> None:
         """Maintenance action buttons call local services and redirect."""
@@ -132,6 +161,29 @@ class DashboardActionTests(TestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertTrue(AlertHit.objects.filter(detector__isnull=False).exists())
+
+    def test_ingest_once_syncs_catalogs_when_registry_is_empty(self) -> None:
+        """Dashboard ingestion syncs bundled sources before finding due feeds."""
+        recorder = FakeIngestionRecorder()
+
+        with patch("monitoring.dashboard_actions._ingest_sources", recorder):
+            result = run_ingest_sources_once_action(limit=3)
+
+        self.assertEqual(Source.objects.count(), 17)
+        self.assertEqual(recorder.source_count, 3)
+        self.assertEqual(result.detail["succeeded"], 3)
+
+
+class FakeIngestionRecorder:
+    """Named fake that records sources passed to the ingestion boundary."""
+
+    def __init__(self) -> None:
+        self.source_count = 0
+
+    def __call__(self, sources: list[Source]) -> tuple[int, int]:
+        """Record source count without fetching remote feeds."""
+        self.source_count = len(sources)
+        return self.source_count, 0
 
 
 def _source() -> Source:

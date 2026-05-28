@@ -1,12 +1,31 @@
 """Django settings for public source monitoring."""
 
+import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = "dev-only-public-source-monitor"
-DEBUG = True
-ALLOWED_HOSTS: list[str] = ["localhost", "127.0.0.1"]
+
+def _env_bool(name: str, default: bool) -> bool:
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _env_list(name: str, default: list[str]) -> list[str]:
+    value = os.environ.get(name, "")
+    if not value.strip():
+        return default
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-only-public-source-monitor")
+DEBUG = _env_bool("DJANGO_DEBUG", True)
+ALLOWED_HOSTS: list[str] = _env_list(
+    "DJANGO_ALLOWED_HOSTS",
+    ["localhost", "127.0.0.1", "testserver"],
+)
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -84,6 +103,7 @@ MEDIA_URL = "media/"
 RAW_SNAPSHOT_DIR = MEDIA_ROOT / "raw"
 PARQUET_EXPORT_DIR = BASE_DIR / "exports"
 MONITOR_USER_AGENT = "PublicSourceMonitor/0.1 (+https://example.local/contact)"
+MONITOR_AUTOLOAD_CATALOGS = False
 
 LOGGING = {
     "version": 1,
