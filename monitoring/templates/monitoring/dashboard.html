@@ -14,6 +14,40 @@
   <div class="panel"><div class="stat">{{ stats.pending_candidates }}</div><div class="muted"><a href="{% url 'monitoring:discovery-candidate-list' %}">Pending candidates</a></div></div>
 </section>
 
+<section aria-labelledby="high-risk-predictions-heading">
+  <h2 id="high-risk-predictions-heading">Recent High-Risk Predictions</h2>
+  <div class="grid">
+    {% for prediction in recent_high_risk_predictions %}
+      <article class="panel">
+        <h3>{{ prediction.event_title }}</h3>
+        <p><strong>{{ prediction.probability_percent }}%</strong> <span class="muted">probability</span></p>
+        <p>
+          <strong>Source/provider/owner</strong><br>
+          {{ prediction.source_name }} / {{ prediction.provider_name }} / {{ prediction.owner_name }}
+        </p>
+        <p><strong>Target</strong><br>{{ prediction.target }}</p>
+        <p><strong>Top 3 factors</strong></p>
+        <ul>
+          {% for factor in prediction.factors %}
+            <li>{{ factor.label }} {{ factor.score|floatformat:2 }}</li>
+          {% empty %}
+            <li class="muted">No score factors available.</li>
+          {% endfor %}
+        </ul>
+        <p><strong>Evidence documents</strong></p>
+        {% for document in prediction.evidence_documents %}
+          <a href="{{ document.url }}">{{ document.title }}</a>{% if not forloop.last %}<br>{% endif %}
+        {% empty %}
+          <span class="muted">No evidence links available.</span>
+        {% endfor %}
+        <p class="muted">Detected {{ prediction.detected_at|date:"Y-m-d H:i" }}</p>
+      </article>
+    {% empty %}
+      <div class="panel muted">No recent high-risk predictions.</div>
+    {% endfor %}
+  </div>
+</section>
+
 <section class="panel">
   <h2>Maintenance Actions</h2>
   <div class="grid">
