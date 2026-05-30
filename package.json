@@ -1,0 +1,12 @@
+{
+  "name": "sourceflow-mobile-smoke",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:e2e:mobile": "playwright test tests/e2e"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.44.0"
+  }
+}
