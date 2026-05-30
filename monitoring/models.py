@@ -676,14 +676,26 @@ class MarketTick(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["instrument", "source", "timestamp", "trade_id"],
-                condition=~models.Q(trade_id=""),
-                name="uniq_market_tick_trade",
-            )
-        ]
-        indexes = [
-            models.Index(fields=["instrument", "timestamp"]),
-            models.Index(fields=["source", "timestamp"]),
-        ]
+        constraints = [models.UniqueConstraint(fields=["instrument", "source", "timestamp", "trade_id"], condition=~models.Q(trade_id=""), name="uniq_market_tick_trade")]
+        indexes = [models.Index(fields=["instrument", "timestamp"]), models.Index(fields=["source", "timestamp"])]
+
+
+from monitoring.finance_models import (  # noqa: E402
+    CFTCCommitmentReport,
+    FeatureFlagSetting,
+    FinancialDataSource,
+    FinancialInstrument,
+    FinancialRelationEdge,
+    FundamentalFact,
+    FuturesContract,
+    FuturesSnapshot,
+    GovernmentReport,
+    MacroObservation,
+    MacroSeries,
+    MarketSessionWindow,
+    MultifractalFeatureSet,
+    OptionContract,
+    OptionSnapshot,
+    PredictionDatasetManifest,
+    StatisticalScore,
+)
