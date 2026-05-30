@@ -10,6 +10,12 @@ MarketLab uses shared Quant4 models:
 - `ModelRun` for benchmarks.
 - `BacktestRun` and `ExplainabilityReport` for later research reports.
 
+Persisted MarketLab runs must populate the shared reproducibility fields:
+`config_hash`, `random_seed`, data range, split range, `feature_schema_json`,
+and `provenance_json`. Feature schemas should describe inputs and claim scope so
+benchmarks and graph outputs remain research metadata, not validity or
+profitability claims.
+
 It must not create competing `Experiment`, `WindowArtifact`, `GraphSnapshot`, or
 `ModelRun` tables. New persistence should use the shared Quant4 records unless a
 future ADR explicitly justifies another model.

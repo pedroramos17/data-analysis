@@ -121,6 +121,7 @@ class Quant4ArtifactTests(TestCase):
             "data_end",
             "split_start",
             "split_end",
+            "feature_schema_json",
             "provenance_json",
         }
 

@@ -16,7 +16,15 @@ def create_marketlab_report(name: str, report: dict[str, object]) -> object:
         config_json=config,
         config_hash=stable_config_hash(config),
         random_seed=0,
+        feature_schema_json=_report_feature_schema(),
         report_json=dict(report),
         provenance_json={"engine": "marketlab"},
         status="RESEARCH_ONLY",
     )
+
+
+def _report_feature_schema() -> dict[str, object]:
+    return {
+        "inputs": ["model_run_id", "metrics", "limitations"],
+        "claim_scope": "explainability_only",
+    }

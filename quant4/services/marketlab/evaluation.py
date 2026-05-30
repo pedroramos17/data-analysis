@@ -40,6 +40,7 @@ def run_marketlab_benchmark(
         config_json=config,
         config_hash=stable_config_hash(config),
         random_seed=0,
+        feature_schema_json=_benchmark_feature_schema(),
         metrics_json=BasicEvaluator().evaluate(predictions, labels),
         provenance_json={"engine": "marketlab"},
         status="RESEARCH_ONLY",
@@ -60,3 +61,12 @@ def _mean_absolute_error(pairs: Sequence[tuple[float, float]]) -> float:
         abs(float(prediction) - float(label)) for prediction, label in pairs
     )
     return total_error / len(pairs)
+
+
+def _benchmark_feature_schema() -> dict[str, object]:
+    return {
+        "prediction": "float",
+        "label": "float",
+        "baseline_required": True,
+        "claim_scope": "benchmark_only",
+    }

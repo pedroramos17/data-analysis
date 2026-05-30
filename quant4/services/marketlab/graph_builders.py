@@ -33,6 +33,7 @@ class CorrelationGraphBuilder(BaseGraphBuilder):
             data_end=_last_date(past),
             node_count=len(past),
             edge_count=max(0, len(past) - 1),
+            feature_schema_json=_graph_feature_schema(),
             metrics_json={"max_observation_date": _date_text(_last_date(past))},
             provenance_json={"engine": "marketlab"},
             status="RESEARCH_ONLY",
@@ -49,3 +50,10 @@ def _last_date(observations: Sequence[tuple[date, float]]) -> date | None:
 
 def _date_text(value: date | None) -> str:
     return "" if value is None else value.isoformat()
+
+
+def _graph_feature_schema() -> dict[str, object]:
+    return {
+        "inputs": ["date", "value"],
+        "fit_scope": "past_observations_at_or_before_as_of",
+    }

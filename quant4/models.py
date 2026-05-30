@@ -206,6 +206,7 @@ class Quant4RunRecord(ReproducibleRecord, TimestampedRecord):
     status = models.CharField(max_length=40, default="PLANNED")
     metrics_json = models.JSONField(default=dict, blank=True)
     artifact_uri = models.CharField(max_length=1200, blank=True)
+    feature_schema_json = models.JSONField(default=dict, blank=True)
 
     class Meta:
         abstract = True

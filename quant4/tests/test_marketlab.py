@@ -115,6 +115,7 @@ class MarketLabModelTests(TestCase):
 
         stored = GraphSnapshot.objects.get(pk=snapshot.pk)
         self.assertEqual(stored.data_end, date(2024, 1, 2))
+        self.assertEqual(stored.feature_schema_json["inputs"], ["date", "value"])
         self.assertEqual(stored.metrics_json["max_observation_date"], "2024-01-02")
 
     def test_timegan_synthetic_data_never_used_in_validation_or_test(self) -> None:
@@ -144,6 +145,7 @@ class MarketLabModelTests(TestCase):
         run = run_marketlab_benchmark("bench", predictions=[1, 0], labels=[1, 1])
 
         stored = ModelRun.objects.get(pk=run.pk)
+        self.assertEqual(stored.feature_schema_json["prediction"], "float")
         self.assertIn("accuracy", stored.metrics_json)
         self.assertIn("loss", stored.metrics_json)
         self.assertTrue(stored.metrics_json["leakage_checked"])

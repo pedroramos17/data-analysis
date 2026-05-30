@@ -31,6 +31,7 @@ Every run and artifact record stores:
 - `random_seed`
 - `data_start` and `data_end`
 - `split_start` and `split_end`
+- `feature_schema_json`
 - `provenance_json`
 
 ## Commands

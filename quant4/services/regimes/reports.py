@@ -31,7 +31,16 @@ def create_regime_run(
         config_json=config,
         config_hash=stable_config_hash(config),
         random_seed=random_seed,
+        feature_schema_json=_regime_feature_schema(),
         metrics_json=regime_summary(returns, prices),
         provenance_json=dict(provenance or {}),
         status="RESEARCH_ONLY",
     )
+
+
+def _regime_feature_schema() -> dict[str, object]:
+    return {
+        "returns": "past_sequence_float",
+        "prices": "past_sequence_float",
+        "fit_scope": "training_or_past_only",
+    }

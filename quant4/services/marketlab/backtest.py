@@ -16,7 +16,15 @@ def create_backtest_run(name: str, metrics: dict[str, object]) -> object:
         config_json=config,
         config_hash=stable_config_hash(config),
         random_seed=0,
+        feature_schema_json=_backtest_feature_schema(),
         metrics_json=dict(metrics),
         provenance_json={"engine": "marketlab"},
         status="RESEARCH_ONLY",
     )
+
+
+def _backtest_feature_schema() -> dict[str, object]:
+    return {
+        "inputs": ["timestamp", "prediction", "label"],
+        "claim_scope": "simulation_only",
+    }

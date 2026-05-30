@@ -44,6 +44,7 @@ def run_risk_analysis(
         config_json=config,
         config_hash=stable_config_hash(config),
         random_seed=random_seed,
+        feature_schema_json=_risk_feature_schema(),
         metrics_json=_risk_metrics(returns, prices, volumes),
         provenance_json=dict(provenance or {}),
         status="RESEARCH_ONLY",
@@ -62,6 +63,14 @@ def _risk_metrics(
         model_risk=build_model_risk_fields("mvp2_risk_core"),
         regime_risk=regime_summary(returns, prices),
     )
+
+
+def _risk_feature_schema() -> dict[str, object]:
+    return {
+        "returns": "past_sequence_float",
+        "prices": "past_sequence_float",
+        "volumes": "past_sequence_float",
+    }
 
 
 def _forecast_risk(returns: Sequence[float]) -> dict[str, object]:

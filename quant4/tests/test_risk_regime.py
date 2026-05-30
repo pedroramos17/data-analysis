@@ -49,6 +49,7 @@ class Quant4RiskCoreTests(TestCase):
 
         stored = RiskRun.objects.get(pk=run.pk)
         self.assertEqual(stored.random_seed, 11)
+        self.assertEqual(stored.feature_schema_json["returns"], "past_sequence_float")
         self.assertIn("forecast_risk", stored.metrics_json)
         self.assertIn("portfolio_risk", stored.metrics_json)
         self.assertIn("liquidity_risk", stored.metrics_json)
@@ -67,6 +68,10 @@ class Quant4RiskCoreTests(TestCase):
         )
 
         stored = ExplainabilityReport.objects.get(pk=report.pk)
+        self.assertEqual(
+            stored.feature_schema_json["scenarios"],
+            "named_research_scenarios",
+        )
         self.assertIn("2008", stored.report_json["scenarios"])
         self.assertIn("COVID", stored.report_json["scenarios"])
         self.assertEqual(stored.report_json["claim_scope"], "research_risk_only")

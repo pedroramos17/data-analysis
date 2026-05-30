@@ -29,6 +29,7 @@ def build_stress_report(
         component_name="stress_testing",
         config_json=config,
         config_hash=stable_config_hash(config),
+        feature_schema_json=_stress_feature_schema(),
         report_json=_stress_report_json(returns, scenarios),
         provenance_json=dict(provenance or {}),
         status="RESEARCH_ONLY",
@@ -42,4 +43,11 @@ def _stress_report_json(
     return {
         "scenarios": run_scenarios(returns, scenarios),
         "claim_scope": "research_risk_only",
+    }
+
+
+def _stress_feature_schema() -> dict[str, object]:
+    return {
+        "returns": "past_sequence_float",
+        "scenarios": "named_research_scenarios",
     }
