@@ -4,27 +4,34 @@
 
 {% block content %}
 <h1>Topics</h1>
-<table>
-  <thead>
-    <tr><th>Topic</th><th>Documents</th><th>Score</th><th>Keywords</th><th>Window</th></tr>
-  </thead>
-  <tbody>
-    {% for cluster in topic_clusters %}
-      <tr>
-        <td>{{ cluster.label }}</td>
-        <td>{{ cluster.document_count }}</td>
-        <td>{{ cluster.score }}</td>
-        <td>
-          {% for keyword in cluster.keywords|slice:":6" %}
-            <span class="pill">{{ keyword }}</span>
-          {% endfor %}
-        </td>
-        <td class="muted">{{ cluster.window_start|date:"Y-m-d H:i" }} - {{ cluster.window_end|date:"Y-m-d H:i" }}</td>
-      </tr>
-    {% empty %}
-      <tr><td colspan="5" class="muted">No topic clusters found.</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
+<div class="table-scroll">
+  <table class="responsive-table">
+    <thead>
+      <tr><th>Topic</th><th>Documents</th><th>Score</th><th>Keywords</th><th>Window</th></tr>
+    </thead>
+    <tbody>
+      {% for cluster in topic_clusters %}
+        <tr>
+          <td data-label="Topic">{{ cluster.label }}</td>
+          <td data-label="Documents">{{ cluster.document_count }}</td>
+          <td data-label="Score">{{ cluster.score }}</td>
+          <td data-label="Keywords">
+            {% for keyword in cluster.keywords|slice:":6" %}
+              <span class="pill">{{ keyword }}</span>
+            {% endfor %}
+          </td>
+          <td data-label="Window" class="muted">
+            <details>
+              <summary>Window</summary>
+              {{ cluster.window_start|date:"Y-m-d H:i" }} - {{ cluster.window_end|date:"Y-m-d H:i" }}
+            </details>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5" class="muted">No topic clusters found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 {% include "monitoring/pagination.html" %}
 {% endblock %}

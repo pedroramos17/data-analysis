@@ -1,0 +1,10 @@
+{
+  "name": "Sourceflow Public Source Monitor",
+  "short_name": "Sourceflow",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1f6feb",
+  "description": "Development shortcut for Sourceflow public-source monitoring."
+}

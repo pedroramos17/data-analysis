@@ -116,38 +116,42 @@
 <section class="grid">
   <div class="panel">
     <h2>Recent NLP Costs</h2>
-    <table>
+    <div class="table-scroll">
+    <table class="responsive-table">
       <thead><tr><th>Entrypoint</th><th>Runtime</th><th>Tokens</th><th>Created</th></tr></thead>
       <tbody>
         {% for metric in recent_metrics %}
           <tr>
-            <td>{{ metric.entrypoint }}</td>
-            <td>{{ metric.total_ms|floatformat:2 }} ms</td>
-            <td>{{ metric.token_count }}</td>
-            <td class="muted">{{ metric.created_at|date:"Y-m-d H:i" }}</td>
+            <td data-label="Entrypoint">{{ metric.entrypoint }}</td>
+            <td data-label="Runtime">{{ metric.total_ms|floatformat:2 }} ms</td>
+            <td data-label="Tokens">{{ metric.token_count }}</td>
+            <td data-label="Created" class="muted">{{ metric.created_at|date:"Y-m-d H:i" }}</td>
           </tr>
         {% empty %}
           <tr><td colspan="4" class="muted">No NLP runs yet.</td></tr>
         {% endfor %}
       </tbody>
     </table>
+    </div>
   </div>
   <div class="panel">
     <h2>Recent Exports</h2>
-    <table>
+    <div class="table-scroll">
+    <table class="responsive-table">
       <thead><tr><th>Path</th><th>Rows</th><th>Created</th></tr></thead>
       <tbody>
         {% for artifact in recent_exports %}
           <tr>
-            <td><a href="{% url 'monitoring:export-artifact-detail' artifact.id %}">{{ artifact.path }}</a></td>
-            <td>{{ artifact.row_count }}</td>
-            <td class="muted">{{ artifact.created_at|date:"Y-m-d H:i" }}</td>
+            <td data-label="Path"><a href="{% url 'monitoring:export-artifact-detail' artifact.id %}">{{ artifact.path }}</a></td>
+            <td data-label="Rows">{{ artifact.row_count }}</td>
+            <td data-label="Created" class="muted">{{ artifact.created_at|date:"Y-m-d H:i" }}</td>
           </tr>
         {% empty %}
           <tr><td colspan="3" class="muted">No exports yet.</td></tr>
         {% endfor %}
       </tbody>
     </table>
+    </div>
   </div>
 </section>
 {% endblock %}
