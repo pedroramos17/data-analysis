@@ -39,7 +39,22 @@ Every run and artifact record stores:
 python manage.py quant4_register_assets --symbol SPY --asset-type etf
 python manage.py quant4_ingest_prices --name spy-daily --source local-csv --frequency 1d
 python manage.py quant4_prepare_windows --dataset-id 1 --name walk-forward-1
+python manage.py quant4_detect_regimes --returns-json "[0.01,-0.02]" --prices-json "[100,98]"
+python manage.py quant4_run_risk --returns-json "[0.01,-0.02]" --prices-json "[100,98]" --volumes-json "[1000,1200]"
 ```
 
 These commands register local metadata only. Quant4 does not place orders,
 connect to accounts, or provide investment advice.
+
+## MVP 2 Risk And Regime Core
+
+Quant4 MVP 2 adds local-only regime and risk services. Regime detectors include
+rolling volatility, drawdown, return-distribution, TDA entropy fallback,
+graph-density, LOB-liquidity stub, and optional `ruptures` / HMM detectors that
+fail clearly when their dependencies are missing.
+
+Risk reports separate `forecast_risk`, `portfolio_risk`, `liquidity_risk`,
+`model_risk`, and `regime_risk`. Stress reports store named scenarios for 2008,
+COVID, rate shock, commodity shock, FX devaluation, correlation breakdown,
+liquidity freeze, and futures roll shock. These outputs are research metadata,
+not execution signals.
