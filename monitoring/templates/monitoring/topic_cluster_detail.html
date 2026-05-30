@@ -1,0 +1,49 @@
+{% extends "monitoring/base.html" %}
+
+{% block title %}Topic timeline{% endblock %}
+
+{% block content %}
+<h1>{{ topic_cluster.canonical_title|default:topic_cluster.label }}</h1>
+<p class="muted">Topic timeline for deterministic slices under one parent topic.</p>
+
+<section class="panel">
+  <h2>Topic timeline</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Slice window</th>
+        <th>Documents</th>
+        <th>Sources</th>
+        <th>Score</th>
+        <th>Keywords</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for topic_slice in topic_slices %}
+        <tr>
+          <td class="muted">{{ topic_slice.slice_start|date:"Y-m-d H:i" }} - {{ topic_slice.slice_end|date:"Y-m-d H:i" }}</td>
+          <td>{{ topic_slice.document_count }}</td>
+          <td>{{ topic_slice.source_count }}</td>
+          <td>{{ topic_slice.score }}</td>
+          <td>
+            {% for keyword in topic_slice.keywords|slice:":6" %}
+              <span class="pill">{{ keyword }}</span>
+            {% endfor %}
+          </td>
+        </tr>
+        <tr>
+          <td colspan="5">
+            {% for link in topic_slice.document_links.all %}
+              <div><a href="{% url 'monitoring:document-list' %}?q={{ link.document.title|urlencode }}">{{ link.document.title }}</a></div>
+            {% empty %}
+              <span class="muted">No documents in this slice.</span>
+            {% endfor %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5" class="muted">No topic slices found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

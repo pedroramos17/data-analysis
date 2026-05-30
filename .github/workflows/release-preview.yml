@@ -1,0 +1,51 @@
+name: Release Preview
+
+on:
+  workflow_dispatch:
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install -r requirements-dev.txt
+
+      - name: Validate Django project
+        run: |
+          python manage.py check
+          python manage.py makemigrations --check --dry-run
+          python manage.py migrate --noinput
+          python manage.py test monitoring.tests
+
+      - name: Build release preview report
+        run: |
+          mkdir -p release-preview
+          {
+            echo "# Release Preview"
+            echo
+            echo "- Django check: passed"
+            echo "- Migration dry-run: passed"
+            echo "- Monitoring tests: passed"
+            echo "- Cloud provider SDKs: not required"
+            echo "- Cloud jobs executed: none"
+          } > release-preview/summary.md
+
+      - name: Upload release preview report
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-preview
+          path: release-preview/

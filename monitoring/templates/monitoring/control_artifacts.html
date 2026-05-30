@@ -1,0 +1,17 @@
+{% extends "monitoring/base.html" %}
+{% load dashboard_tables %}
+
+{% block title %}Dashboard Artifacts{% endblock %}
+
+{% block content %}
+<h1>Dashboard Artifacts</h1>
+<section class="panel">
+  <h2>Export Artifacts</h2>
+  {% dashboard_table artifacts_table %}
+</section>
+
+<section class="panel">
+  <h2>Job Manifests</h2>
+  {% dashboard_table manifest_jobs_table %}
+</section>
+{% endblock %}

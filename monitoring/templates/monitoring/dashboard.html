@@ -1,4 +1,5 @@
 {% extends "monitoring/base.html" %}
+{% load dashboard_tables %}
 
 {% block title %}Operations Dashboard{% endblock %}
 
@@ -12,6 +13,7 @@
   <div class="panel"><div class="stat">{{ stats.open_alerts }}</div><div class="muted">Open alerts</div></div>
   <div class="panel"><div class="stat">{{ stats.topic_clusters }}</div><div class="muted">Topic clusters</div></div>
   <div class="panel"><div class="stat">{{ stats.pending_candidates }}</div><div class="muted"><a href="{% url 'monitoring:discovery-candidate-list' %}">Pending candidates</a></div></div>
+  <div class="panel"><h2>Sourceflow Intelligence</h2><div class="muted"><a href="{% url 'monitoring:intelligence-dashboard' %}">Open factor mining UI</a></div></div>
 </section>
 
 <section aria-labelledby="high-risk-predictions-heading">
@@ -54,33 +56,86 @@
     <form method="post" action="{% url 'monitoring:enrich-documents-action' %}">
       {% csrf_token %}
       <h3>Enrich Documents</h3>
-      <input type="number" name="limit" value="500" min="1">
-      <label class="muted"><input type="checkbox" name="force" value="1"> Force</label>
+      <p class="muted">Run local metadata, keyword, entity, and summary enrichment.</p>
+      <label class="field-stack">
+        <span class="field-label">Document limit <span class="tooltip" tabindex="0" aria-label="Explain Document limit">?<span class="tooltip-text">Maximum normalized documents to enrich in this run.</span></span></span>
+        <input type="number" name="limit" value="500" min="1">
+      </label>
+      <label class="field-label"><input type="checkbox" name="force" value="1"> Force re-enrich <span class="tooltip" tabindex="0" aria-label="Explain Force re-enrich">?<span class="tooltip-text">Recompute enrichment even when a document already has saved enrichment.</span></span></label>
       <button type="submit">Run enrichment</button>
     </form>
     <form method="post" action="{% url 'monitoring:discover-sources-action' %}">
       {% csrf_token %}
       <h3>Discover Sources</h3>
-      <input type="number" name="limit" value="200" min="1">
+      <p class="muted">Inspect local documents for candidate RSS feeds.</p>
+      <label class="field-stack">
+        <span class="field-label">Source discovery limit <span class="tooltip" tabindex="0" aria-label="Explain Source discovery limit">?<span class="tooltip-text">Maximum documents to scan for candidate feed links.</span></span></span>
+        <input type="number" name="limit" value="200" min="1">
+      </label>
       <button type="submit">Run discovery</button>
+    </form>
+    <form method="post" action="{% url 'monitoring:ingest-sources-run-once-action' %}">
+      {% csrf_token %}
+      <h3>Ingest Due Sources</h3>
+      <p class="muted">Fetch enabled sources that are due according to cadence.</p>
+      <label class="field-stack">
+        <span class="field-label">Due source limit <span class="tooltip" tabindex="0" aria-label="Explain Due source limit">?<span class="tooltip-text">Maximum due sources to fetch immediately in this request.</span></span></span>
+        <input type="number" name="limit" value="20" min="1">
+      </label>
+      <button type="submit">Run once</button>
+    </form>
+    <form method="post" action="{% url 'monitoring:ingest-sources-auto-run-action' %}">
+      {% csrf_token %}
+      <h3>Auto-run Sources</h3>
+      <p class="muted">Queue a local worker job for due source ingestion.</p>
+      <label class="field-stack">
+        <span class="field-label">Auto-run source limit <span class="tooltip" tabindex="0" aria-label="Explain Auto-run source limit">?<span class="tooltip-text">Maximum due sources the queued ingestion job should process.</span></span></span>
+        <input type="number" name="limit" value="20" min="1">
+      </label>
+      <button type="submit">Queue auto-run</button>
+    </form>
+    <form method="post" action="{% url 'monitoring:sync-catalogs-action' %}">
+      {% csrf_token %}
+      <h3>Sync Catalogs</h3>
+      <p class="muted">Synchronize bundled JSON catalogs into sources.</p>
+      <button type="submit">Sync catalogs</button>
     </form>
     <form method="post" action="{% url 'monitoring:evaluate-alerts-action' %}">
       {% csrf_token %}
       <h3>Evaluate Alerts</h3>
-      <input type="number" name="lookback_hours" value="24" min="1">
+      <p class="muted">Create deduplicated alert hits from recent topic clusters.</p>
+      <label class="field-stack">
+        <span class="field-label">Alert lookback hours <span class="tooltip" tabindex="0" aria-label="Explain Alert lookback hours">?<span class="tooltip-text">How far back to scan documents and clusters for alert signals.</span></span></span>
+        <input type="number" name="lookback_hours" value="24" min="1">
+      </label>
       <button type="submit">Evaluate alerts</button>
     </form>
     <form method="post" action="{% url 'monitoring:cluster-topics-action' %}">
       {% csrf_token %}
       <h3>Cluster Topics</h3>
-      <input type="number" name="window_hours" value="72" min="1">
-      <input type="number" name="min_documents" value="3" min="2">
-      <button type="submit">Build clusters</button>
+      <p class="muted">Update parent topics and deterministic time-slice timelines.</p>
+      <label class="field-stack">
+        <span class="field-label">Topic window hours <span class="tooltip" tabindex="0" aria-label="Explain Topic window hours">?<span class="tooltip-text">How far back to select documents for this clustering pass.</span></span></span>
+        <input type="number" name="window_hours" value="72" min="1">
+      </label>
+      <label class="field-stack">
+        <span class="field-label">Topic slice hours <span class="tooltip" tabindex="0" aria-label="Explain Topic slice hours">?<span class="tooltip-text">Size of each deterministic timeline slice under a parent topic.</span></span></span>
+        <input type="number" name="slice_hours" value="24" min="1">
+      </label>
+      <label class="field-stack">
+        <span class="field-label">Minimum documents <span class="tooltip" tabindex="0" aria-label="Explain Minimum documents">?<span class="tooltip-text">Smallest document count required before a bucket becomes a topic slice.</span></span></span>
+        <input type="number" name="min_documents" value="3" min="2">
+      </label>
+      <button type="submit">Update topic slices</button>
     </form>
     <form method="post" action="{% url 'monitoring:score-source-reputation-action' %}">
       {% csrf_token %}
       <h3>Score Reputation</h3>
-      <input type="number" name="window_days" value="30" min="1">
+      <p class="muted">Refresh source reputation using recent ingestion and alert signals.</p>
+      <label class="field-stack">
+        <span class="field-label">Reputation window days <span class="tooltip" tabindex="0" aria-label="Explain Reputation window days">?<span class="tooltip-text">Number of recent days used when computing source reputation.</span></span></span>
+        <input type="number" name="window_days" value="30" min="1">
+      </label>
       <button type="submit">Score sources</button>
     </form>
     <form method="post" action="{% url 'monitoring:export-parquet-action' %}">
@@ -96,14 +151,20 @@
   <h2>Offline NLP Pipeline</h2>
   <form method="post" action="{% url 'monitoring:nlp-pipeline-action' %}">
     {% csrf_token %}
-    <textarea name="text" placeholder="Paste public-source text to enrich locally."></textarea>
+    <label class="field-stack">
+      <span class="field-label">NLP text <span class="tooltip" tabindex="0" aria-label="Explain NLP text">?<span class="tooltip-text">Public-source text to enrich locally without external NLP services.</span></span></span>
+      <textarea name="text" placeholder="Paste public-source text to enrich locally."></textarea>
+    </label>
     <div class="actions">
-      <select name="tasks">
-        <option value="all">All tasks</option>
-        <option value="entities,keywords,summary">Entities, keywords, summary</option>
-        <option value="topics,sentiment,hashtags">Topics, sentiment, hashtags</option>
-        <option value="embeddings">Embeddings only</option>
-      </select>
+      <label class="field-stack">
+        <span class="field-label">NLP task set <span class="tooltip" tabindex="0" aria-label="Explain NLP task set">?<span class="tooltip-text">Choose which local NLP pipeline stages to run for the pasted text.</span></span></span>
+        <select name="tasks">
+          <option value="all">All tasks</option>
+          <option value="entities,keywords,summary">Entities, keywords, summary</option>
+          <option value="topics,sentiment,hashtags">Topics, sentiment, hashtags</option>
+          <option value="embeddings">Embeddings only</option>
+        </select>
+      </label>
       <button type="submit">Run NLP</button>
     </div>
   </form>
@@ -152,6 +213,11 @@
       </tbody>
     </table>
     </div>
+    {% dashboard_table recent_metrics_table %}
+  </div>
+  <div class="panel">
+    <h2>Recent Exports</h2>
+    {% dashboard_table recent_exports_table %}
   </div>
 </section>
 {% endblock %}
