@@ -4,39 +4,46 @@
 
 {% block content %}
 <h1>Sources</h1>
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Category</th>
-      <th>Tier</th>
-      <th>Type</th>
-      <th>Fetch</th>
-      <th>Cadence</th>
-      <th>Status</th>
-      <th>Tags</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for source in sources %}
+<div class="table-scroll">
+  <table class="responsive-table">
+    <thead>
       <tr>
-        <td><a href="{% url 'monitoring:source-detail' source.id %}">{{ source.name }}</a></td>
-        <td>{{ source.get_category_display }}</td>
-        <td>{{ source.source_tier }}</td>
-        <td>{{ source.get_source_type_display }}</td>
-        <td>{{ source.get_fetch_method_display }}</td>
-        <td>{{ source.cadence_minutes }} min</td>
-        <td>{% if source.is_enabled %}Enabled{% else %}Disabled{% endif %}</td>
-        <td>
-          {% for tag in source.tags %}
-            <span class="pill">{{ tag }}</span>
-          {% endfor %}
-        </td>
+        <th>Name</th>
+        <th>Category</th>
+        <th>Tier</th>
+        <th>Type</th>
+        <th>Fetch</th>
+        <th>Cadence</th>
+        <th>Status</th>
+        <th>Tags</th>
       </tr>
-    {% empty %}
-      <tr><td colspan="8" class="muted">No sources registered.</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
+    </thead>
+    <tbody>
+      {% for source in sources %}
+        <tr>
+          <td data-label="Name"><a href="{% url 'monitoring:source-detail' source.id %}">{{ source.name }}</a></td>
+          <td data-label="Category">{{ source.get_category_display }}</td>
+          <td data-label="Tier">{{ source.source_tier }}</td>
+          <td data-label="Type">{{ source.get_source_type_display }}</td>
+          <td data-label="Fetch">{{ source.get_fetch_method_display }}</td>
+          <td data-label="Cadence">{{ source.cadence_minutes }} min</td>
+          <td data-label="Status">{% if source.is_enabled %}Enabled{% else %}Disabled{% endif %}</td>
+          <td data-label="Tags">
+            <details>
+              <summary>Tags</summary>
+              {% for tag in source.tags %}
+                <span class="pill">{{ tag }}</span>
+              {% empty %}
+                <span class="muted">No tags</span>
+              {% endfor %}
+            </details>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="8" class="muted">No sources registered.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 {% include "monitoring/pagination.html" %}
 {% endblock %}

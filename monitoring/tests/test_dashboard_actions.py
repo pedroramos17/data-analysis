@@ -13,6 +13,8 @@ from django.urls import reverse
 from monitoring.dashboard_actions import run_ingest_sources_once_action
 from monitoring.models import (
     AlertHit,
+    AlertHitDocument,
+    AlertRule,
     DiscoveryCandidate,
     ExportArtifact,
     NlpRunMetric,
@@ -34,6 +36,31 @@ class DashboardActionTests(TestCase):
         self.assertContains(dashboard_response, "Operations Dashboard")
         self.assertEqual(documents_response.status_code, 200)
 
+    def test_dashboard_response_lists_high_risk_predictions(self) -> None:
+        """Dashboard renders high-risk prediction fields and evidence links."""
+        document = _prediction_document()
+        rule = AlertRule.objects.create(
+            name="Orbital Risk",
+            rule_type=AlertRule.RuleType.KEYWORD,
+            query="orbital",
+        )
+        alert = _high_risk_alert(rule, document)
+        AlertHitDocument.objects.create(alert_hit=alert, document=document)
+
+        response = self.client.get(reverse("monitoring:dashboard"))
+
+        self.assertEqual(response.status_code, 200)
+        for expected_text in (
+            "Recent High-Risk Predictions",
+            "Orbital supply disruption",
+            "WireDesk",
+            "Acme Media",
+            "SatelliteCo",
+            "91%",
+            "Trend 0.74",
+            document.canonical_url,
+        ):
+            self.assertContains(response, expected_text)
     def test_dashboard_action_fields_have_labels_and_tooltips(self) -> None:
         """Maintenance controls explain each field and action."""
         response = self.client.get(reverse("monitoring:dashboard"))
@@ -218,3 +245,45 @@ def _document(title: str = "Dashboard Document") -> NormalizedDocument:
         tags=["security"],
         dedupe_hash=f"dashboard-doc-{unique}",
     )
+
+
+def _prediction_document() -> NormalizedDocument:
+    document = _document(title="Orbital supply disruption")
+    document.metadata = {"provider": "WireDesk", "owner": "Acme Media"}
+    document.save(update_fields=["metadata"])
+    document.source.state_affiliation = "Acme Holdings"
+    document.source.save(update_fields=["state_affiliation"])
+    return document
+
+
+def _high_risk_alert(
+    rule: AlertRule,
+    document: NormalizedDocument,
+) -> AlertHit:
+    return AlertHit.objects.create(
+        rule=rule,
+        source=document.source,
+        representative_document=document,
+        document=document,
+        dedupe_hash="dashboard-high-risk",
+        title=document.title,
+        matched_text=document.content,
+        severity=AlertRule.Severity.HIGH,
+        severity_score=0.91,
+        confidence_score=0.88,
+        novelty_score=0.66,
+        trend_score=0.74,
+        source_diversity_score=0.52,
+        metadata=_prediction_metadata(),
+    )
+
+
+def _prediction_metadata() -> dict[str, object]:
+    return {
+        "target": "SatelliteCo",
+        "score_breakdown": {
+            "trend": 0.74,
+            "novelty": 0.66,
+            "source_diversity": 0.52,
+        },
+    }

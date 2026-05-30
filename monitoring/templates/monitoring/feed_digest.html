@@ -8,45 +8,54 @@
 <p class="muted">Open alerts: {{ digest.alert_counts.open }}</p>
 {% if digest.top_clusters %}
   <h2>Top Clusters</h2>
-  <table>
-    <thead><tr><th>Topic</th><th>Documents</th><th>Score</th><th>Keywords</th></tr></thead>
-    <tbody>
-      {% for cluster in digest.top_clusters %}
-        <tr>
-          <td>{{ cluster.label }}</td>
-          <td>{{ cluster.document_count }}</td>
-          <td>{{ cluster.score }}</td>
-          <td>
-            {% for keyword in cluster.keywords %}
-              <span class="pill">{{ keyword }}</span>
-            {% endfor %}
-          </td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="table-scroll">
+    <table class="responsive-table">
+      <thead><tr><th>Topic</th><th>Documents</th><th>Score</th><th>Keywords</th></tr></thead>
+      <tbody>
+        {% for cluster in digest.top_clusters %}
+          <tr>
+            <td data-label="Topic">{{ cluster.label }}</td>
+            <td data-label="Documents">{{ cluster.document_count }}</td>
+            <td data-label="Score">{{ cluster.score }}</td>
+            <td data-label="Keywords">
+              {% for keyword in cluster.keywords %}
+                <span class="pill">{{ keyword }}</span>
+              {% endfor %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 {% endif %}
 {% for category, items in digest.categories.items %}
   <h2>{{ category|title }}</h2>
-  <table>
-    <thead>
-      <tr><th>Title</th><th>Source</th><th>Published</th><th>Entities</th></tr>
-    </thead>
-    <tbody>
-      {% for item in items %}
-        <tr>
-          <td><a href="{{ item.url }}">{{ item.title }}</a><br><span class="muted">{{ item.snippet }}</span></td>
-          <td>{{ item.source }}</td>
-          <td class="muted">{{ item.published_at }}</td>
-          <td>
-            {% for entity in item.entities %}
-              <span class="pill">{{ entity }}</span>
-            {% endfor %}
-          </td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="table-scroll">
+    <table class="responsive-table">
+      <thead>
+        <tr><th>Title</th><th>Source</th><th>Published</th><th>Entities</th></tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+          <tr>
+            <td data-label="Title"><a href="{{ item.url }}">{{ item.title }}</a><br><span class="muted">{{ item.snippet }}</span></td>
+            <td data-label="Source">{{ item.source }}</td>
+            <td data-label="Published" class="muted">{{ item.published_at }}</td>
+            <td data-label="Entities">
+              <details>
+                <summary>Entities</summary>
+                {% for entity in item.entities %}
+                  <span class="pill">{{ entity }}</span>
+                {% empty %}
+                  <span class="muted">No entities</span>
+                {% endfor %}
+              </details>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 {% empty %}
   <p class="muted">No digest items available.</p>
 {% endfor %}

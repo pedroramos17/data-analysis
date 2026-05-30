@@ -3,8 +3,26 @@
 import os
 from pathlib import Path
 
+from public_monitor.remote_mobile import (
+    build_remote_mobile_settings,
+    warn_remote_mobile_testing,
+)
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+SECRET_KEY = "dev-only-public-source-monitor"
+DEBUG = True
+BASE_ALLOWED_HOSTS: list[str] = ["localhost", "127.0.0.1"]
+REMOTE_MOBILE_SETTINGS = build_remote_mobile_settings(DEBUG, BASE_ALLOWED_HOSTS)
+ALLOWED_HOSTS: list[str] = REMOTE_MOBILE_SETTINGS.allowed_hosts
+CSRF_TRUSTED_ORIGINS: list[str] = REMOTE_MOBILE_SETTINGS.csrf_trusted_origins
+REMOTE_MOBILE_TESTING_ENABLED = REMOTE_MOBILE_SETTINGS.enabled
+DEV_PUBLIC_BASE_URL = REMOTE_MOBILE_SETTINGS.public_base_url
+DEV_EXTRA_ALLOWED_HOSTS = REMOTE_MOBILE_SETTINGS.extra_allowed_hosts
+DEV_CSRF_TRUSTED_ORIGINS = REMOTE_MOBILE_SETTINGS.csrf_trusted_origins
+DEV_TUNNEL_PROVIDER = REMOTE_MOBILE_SETTINGS.provider
+DEV_TUNNEL_NOTES = REMOTE_MOBILE_SETTINGS.notes
+warn_remote_mobile_testing(REMOTE_MOBILE_SETTINGS)
 
 def _env_bool(name: str, default: bool) -> bool:
     value = os.environ.get(name)
@@ -59,6 +77,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "monitoring.context_processors.remote_mobile_testing",
             ],
         },
     }
@@ -76,7 +95,10 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "UserAttributeSimilarityValidator"
+        ),
     },
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
@@ -95,6 +117,7 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
+STATICFILES_DIRS = [BASE_DIR / "static"]
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 MEDIA_ROOT = BASE_DIR / "media"

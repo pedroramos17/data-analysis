@@ -14,3 +14,5 @@ runserver.err
 runserver*.log
 runserver*.err
 server*.log
+node_modules/
+test-results/

@@ -24,6 +24,7 @@ from monitoring.dashboard_actions import (
     run_score_reputation_action,
     run_sync_catalogs_action,
 )
+from monitoring.dashboard_predictions import list_recent_high_risk_predictions
 from monitoring.dashboard_table_data import exports_table, metrics_table
 from monitoring.digests import list_feed_digest_payload
 from monitoring.exporters import read_parquet_preview
@@ -62,6 +63,9 @@ class DashboardView(TemplateView):
         nlp_result = self.request.session.get("latest_nlp_result")
         context["nlp_result"] = nlp_result
         context["nlp_result_json"] = _pretty_json(nlp_result)
+        context["recent_metrics"] = NlpRunMetric.objects.all()[:5]
+        context["recent_exports"] = ExportArtifact.objects.all()[:5]
+        context["recent_high_risk_predictions"] = list_recent_high_risk_predictions()
         recent_metrics = NlpRunMetric.objects.all()[:5]
         recent_exports = ExportArtifact.objects.all()[:5]
         context["recent_metrics"] = recent_metrics
