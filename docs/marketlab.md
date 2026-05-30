@@ -26,5 +26,5 @@ Commands:
 python manage.py marketlab_prepare_windows --values-json "[1,2,3,4,5,6]"
 python manage.py marketlab_validate_shuffles --values-json "[1,2,3,4]"
 python manage.py marketlab_detect_regimes --values-json "[1,2,3,4]"
-python manage.py marketlab_run_benchmark --predictions-json "[1,0]" --labels-json "[1,1]"
+python manage.py marketlab_run_benchmark --predictions-json "[1,0]" --labels-json "[1,1]" --data-start 2024-01-01 --data-end 2024-01-02 --split-start 2024-01-02 --split-end 2024-01-02
 ```

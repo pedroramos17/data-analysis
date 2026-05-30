@@ -31,6 +31,8 @@ class CorrelationGraphBuilder(BaseGraphBuilder):
             random_seed=0,
             data_start=_first_date(past),
             data_end=_last_date(past),
+            split_start=as_of,
+            split_end=as_of,
             node_count=len(past),
             edge_count=max(0, len(past) - 1),
             feature_schema_json=_graph_feature_schema(),

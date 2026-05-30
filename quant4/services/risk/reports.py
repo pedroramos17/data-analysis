@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from datetime import date
 
 from quant4.services.regimes.detectors import regime_summary
 from quant4.services.registry import stable_config_hash
@@ -18,6 +19,7 @@ from quant4.services.risk.tail_risk import (
     historical_var,
     max_drawdown,
 )
+from quant4.services.run_metadata import build_run_metadata_fields
 from sourceflow.config.feature_flags import require_feature
 
 
@@ -26,13 +28,15 @@ def run_risk_analysis(
     returns: Sequence[float],
     prices: Sequence[float],
     volumes: Sequence[float],
+    data_range: tuple[date, date],
+    split_range: tuple[date, date],
     random_seed: int = 0,
     provenance: Mapping[str, object] | None = None,
 ) -> object:
     """Persist a separated Quant4 risk report in RiskRun.metrics_json.
 
     Example:
-        `run_risk_analysis("risk", [0.01], [100.0], [1000.0])`
+        `run_risk_analysis("risk", [0.01], [100.0], [1000.0], dr, sr)`
     """
     require_feature("QUANT4_RISK_CORE")
     from quant4.models import RiskRun
@@ -43,10 +47,9 @@ def run_risk_analysis(
         component_name="mvp2_risk_core",
         config_json=config,
         config_hash=stable_config_hash(config),
-        random_seed=random_seed,
+        **build_run_metadata_fields(data_range, split_range, random_seed, provenance),
         feature_schema_json=_risk_feature_schema(),
         metrics_json=_risk_metrics(returns, prices, volumes),
-        provenance_json=dict(provenance or {}),
         status="RESEARCH_ONLY",
     )
 

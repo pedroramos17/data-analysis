@@ -40,8 +40,8 @@ Every run and artifact record stores:
 python manage.py quant4_register_assets --symbol SPY --asset-type etf
 python manage.py quant4_ingest_prices --name spy-daily --source local-csv --frequency 1d
 python manage.py quant4_prepare_windows --dataset-id 1 --name walk-forward-1
-python manage.py quant4_detect_regimes --returns-json "[0.01,-0.02]" --prices-json "[100,98]"
-python manage.py quant4_run_risk --returns-json "[0.01,-0.02]" --prices-json "[100,98]" --volumes-json "[1000,1200]"
+python manage.py quant4_detect_regimes --returns-json "[0.01,-0.02]" --prices-json "[100,98]" --data-start 2024-01-01 --data-end 2024-01-02 --split-start 2024-01-02 --split-end 2024-01-02
+python manage.py quant4_run_risk --returns-json "[0.01,-0.02]" --prices-json "[100,98]" --volumes-json "[1000,1200]" --data-start 2024-01-01 --data-end 2024-01-02 --split-start 2024-01-02 --split-end 2024-01-02
 ```
 
 These commands register local metadata only. Quant4 does not place orders,

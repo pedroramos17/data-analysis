@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import date
+
 from django.test import TestCase
 
 
@@ -44,11 +46,15 @@ class Quant4RiskCoreTests(TestCase):
             returns=[0.01, -0.02, 0.015, -0.03],
             prices=[100.0, 98.0, 99.0, 96.0],
             volumes=[1000.0, 1100.0, 900.0, 950.0],
+            data_range=(date(2024, 1, 1), date(2024, 1, 4)),
+            split_range=(date(2024, 1, 3), date(2024, 1, 4)),
             random_seed=11,
         )
 
         stored = RiskRun.objects.get(pk=run.pk)
         self.assertEqual(stored.random_seed, 11)
+        self.assertEqual(stored.data_start, date(2024, 1, 1))
+        self.assertEqual(stored.split_end, date(2024, 1, 4))
         self.assertEqual(stored.feature_schema_json["returns"], "past_sequence_float")
         self.assertIn("forecast_risk", stored.metrics_json)
         self.assertIn("portfolio_risk", stored.metrics_json)
@@ -65,9 +71,12 @@ class Quant4RiskCoreTests(TestCase):
             name="stress-smoke",
             returns=[0.01, -0.02, 0.015, -0.03],
             scenarios=["2008", "COVID"],
+            data_range=(date(2024, 1, 1), date(2024, 1, 4)),
+            split_range=(date(2024, 1, 3), date(2024, 1, 4)),
         )
 
         stored = ExplainabilityReport.objects.get(pk=report.pk)
+        self.assertEqual(stored.data_end, date(2024, 1, 4))
         self.assertEqual(
             stored.feature_schema_json["scenarios"],
             "named_research_scenarios",

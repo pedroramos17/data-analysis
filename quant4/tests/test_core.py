@@ -141,6 +141,18 @@ class Quant4ArtifactTests(TestCase):
                 field_names = {field.name for field in model._meta.fields}
                 self.assertTrue(required.issubset(field_names))
 
+    def test_run_metadata_rejects_split_outside_data_range(self) -> None:
+        """Run metadata ranges fail closed when split dates exceed data dates."""
+        from quant4.services.run_metadata import build_run_metadata_fields
+
+        with self.assertRaisesRegex(ValueError, "split_range"):
+            build_run_metadata_fields(
+                data_range=(date(2024, 1, 1), date(2024, 1, 31)),
+                split_range=(date(2024, 2, 1), date(2024, 2, 5)),
+                random_seed=3,
+                provenance={"test": "unit"},
+            )
+
 
 class Quant4SafetyTests(TestCase):
     """Leakage and registry failures should fail closed with clear messages."""

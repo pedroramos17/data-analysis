@@ -115,6 +115,7 @@ class MarketLabModelTests(TestCase):
 
         stored = GraphSnapshot.objects.get(pk=snapshot.pk)
         self.assertEqual(stored.data_end, date(2024, 1, 2))
+        self.assertEqual(stored.split_end, date(2024, 1, 2))
         self.assertEqual(stored.feature_schema_json["inputs"], ["date", "value"])
         self.assertEqual(stored.metrics_json["max_observation_date"], "2024-01-02")
 
@@ -142,9 +143,16 @@ class MarketLabModelTests(TestCase):
         from quant4.models import ModelRun
         from quant4.services.marketlab.evaluation import run_marketlab_benchmark
 
-        run = run_marketlab_benchmark("bench", predictions=[1, 0], labels=[1, 1])
+        run = run_marketlab_benchmark(
+            "bench",
+            predictions=[1, 0],
+            labels=[1, 1],
+            data_range=(date(2024, 1, 1), date(2024, 1, 2)),
+            split_range=(date(2024, 1, 2), date(2024, 1, 2)),
+        )
 
         stored = ModelRun.objects.get(pk=run.pk)
+        self.assertEqual(stored.split_start, date(2024, 1, 2))
         self.assertEqual(stored.feature_schema_json["prediction"], "float")
         self.assertIn("accuracy", stored.metrics_json)
         self.assertIn("loss", stored.metrics_json)

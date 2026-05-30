@@ -7,6 +7,7 @@ import json
 from django.core.management.base import BaseCommand, CommandParser
 
 from quant4.services.risk.reports import run_risk_analysis
+from quant4.services.run_metadata import parse_iso_date_range
 
 
 class Command(BaseCommand):
@@ -20,6 +21,10 @@ class Command(BaseCommand):
         parser.add_argument("--returns-json", required=True)
         parser.add_argument("--prices-json", required=True)
         parser.add_argument("--volumes-json", required=True)
+        parser.add_argument("--data-start", required=True)
+        parser.add_argument("--data-end", required=True)
+        parser.add_argument("--split-start", required=True)
+        parser.add_argument("--split-end", required=True)
         parser.add_argument("--random-seed", type=int, default=0)
 
     def handle(self, *args: object, **options: object) -> None:
@@ -29,6 +34,16 @@ class Command(BaseCommand):
             returns=self._float_list(options["returns_json"], "returns-json"),
             prices=self._float_list(options["prices_json"], "prices-json"),
             volumes=self._float_list(options["volumes_json"], "volumes-json"),
+            data_range=parse_iso_date_range(
+                options["data_start"],
+                options["data_end"],
+                "data_range",
+            ),
+            split_range=parse_iso_date_range(
+                options["split_start"],
+                options["split_end"],
+                "split_range",
+            ),
             random_seed=int(options["random_seed"]),
             provenance={"command": "quant4_run_risk"},
         )

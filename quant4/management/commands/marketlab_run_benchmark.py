@@ -7,6 +7,7 @@ import json
 from django.core.management.base import BaseCommand, CommandParser
 
 from quant4.services.marketlab.evaluation import run_marketlab_benchmark
+from quant4.services.run_metadata import parse_iso_date_range
 
 
 class Command(BaseCommand):
@@ -19,6 +20,11 @@ class Command(BaseCommand):
         parser.add_argument("--name", default="marketlab-benchmark")
         parser.add_argument("--predictions-json", required=True)
         parser.add_argument("--labels-json", required=True)
+        parser.add_argument("--data-start", required=True)
+        parser.add_argument("--data-end", required=True)
+        parser.add_argument("--split-start", required=True)
+        parser.add_argument("--split-end", required=True)
+        parser.add_argument("--random-seed", type=int, default=0)
 
     def handle(self, *args: object, **options: object) -> None:
         """Create a shared ModelRun benchmark."""
@@ -26,6 +32,17 @@ class Command(BaseCommand):
             str(options["name"]),
             self._values(options["predictions_json"], "predictions"),
             self._values(options["labels_json"], "labels"),
+            data_range=parse_iso_date_range(
+                options["data_start"],
+                options["data_end"],
+                "data_range",
+            ),
+            split_range=parse_iso_date_range(
+                options["split_start"],
+                options["split_end"],
+                "split_range",
+            ),
+            random_seed=int(options["random_seed"]),
         )
         self.stdout.write(f"model_run_id={run.pk}")
 
