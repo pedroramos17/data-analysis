@@ -1,0 +1,2 @@
+"""NRDE smoke experiment template."""
+

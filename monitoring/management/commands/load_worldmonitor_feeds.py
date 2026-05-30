@@ -4,7 +4,7 @@ from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandParser
 
-from monitoring.catalog import load_feed_catalog, upsert_catalog_sources
+from monitoring.catalog_sync import sync_worldmonitor_feeds
 
 
 class Command(BaseCommand):
@@ -33,9 +33,14 @@ class Command(BaseCommand):
         """
         catalog_path = _optional_path(options.get("catalog"))
         domains_path = _optional_path(options.get("allowed_domains"))
-        rows = load_feed_catalog(*_catalog_args(catalog_path, domains_path))
-        count = upsert_catalog_sources(rows)
-        self.stdout.write(f"Loaded {count} WorldMonitor-style RSS sources")
+        result = sync_worldmonitor_feeds(
+            dry_run=False,
+            catalog_path=catalog_path or _default_catalog_path(),
+            allowed_domains_path=domains_path or _default_domains_path(),
+        )
+        self.stdout.write(
+            f"Loaded {result.source_count} WorldMonitor-style RSS sources"
+        )
 
 
 def _optional_path(value: object) -> Path | None:
@@ -44,12 +49,13 @@ def _optional_path(value: object) -> Path | None:
     return Path(str(value))
 
 
-def _catalog_args(
-    catalog_path: Path | None,
-    domains_path: Path | None,
-) -> tuple[Path, ...]:
-    if catalog_path is not None and domains_path is not None:
-        return (catalog_path, domains_path)
-    if catalog_path is not None:
-        return (catalog_path,)
-    return ()
+def _default_catalog_path() -> Path:
+    from monitoring.catalog import DEFAULT_FEED_CATALOG
+
+    return DEFAULT_FEED_CATALOG
+
+
+def _default_domains_path() -> Path:
+    from monitoring.catalog import DEFAULT_ALLOWED_DOMAINS
+
+    return DEFAULT_ALLOWED_DOMAINS

@@ -3,6 +3,8 @@
 from django.db import models
 from django.utils import timezone
 
+from monitoring.ownership_models import Owner, Provider, domain_from_url
+
 
 class Source(models.Model):
     """A public source that can be fetched on a schedule.
@@ -49,6 +51,11 @@ class Source(models.Model):
 
     name = models.CharField(max_length=180, unique=True)
     url = models.URLField(max_length=1200)
+    provider = models.ForeignKey(
+        Provider,
+        on_delete=models.PROTECT,
+        related_name="sources",
+    )
     source_type = models.CharField(max_length=20, choices=SourceType.choices)
     fetch_method = models.CharField(max_length=20, choices=FetchMethod.choices)
     cadence_minutes = models.PositiveIntegerField(default=60)
@@ -92,6 +99,24 @@ class Source(models.Model):
             `str(source)`
         """
         return self.name
+
+    def save(self, *args: object, **kwargs: object) -> None:
+        """Attach a default provider for older source creation paths.
+
+        Example:
+            `source.save()`
+        """
+        if not self.provider_id:
+            self.provider = _default_provider_for_source(self.name, self.url)
+        super().save(*args, **kwargs)
+
+
+def _default_provider_for_source(source_name: str, source_url: str) -> Provider:
+    provider, _created = Provider.objects.get_or_create(
+        name=source_name,
+        defaults={"domain": domain_from_url(source_url)},
+    )
+    return provider
 
 
 class RawEvent(models.Model):
@@ -140,20 +165,37 @@ class NormalizedDocument(models.Model):
         `NormalizedDocument.objects.filter(language="en")`
     """
 
+    class Status(models.TextChoices):
+        NEW = "new", "New"
+        NORMALIZED = "normalized", "Normalized"
+        ENRICHED = "enriched", "Enriched"
+        CLUSTERED = "clustered", "Clustered"
+        FAILED = "failed", "Failed"
+
     source = models.ForeignKey(Source, on_delete=models.CASCADE)
     raw_event = models.OneToOneField(RawEvent, on_delete=models.CASCADE)
+    url = models.URLField(max_length=1200, blank=True)
     canonical_url = models.URLField(max_length=1200)
+    url_hash = models.CharField(max_length=64, blank=True)
     title = models.CharField(max_length=500)
+    description = models.TextField(blank=True)
     author = models.CharField(max_length=300, blank=True)
     published_at = models.DateTimeField(null=True, blank=True)
+    fetched_at = models.DateTimeField(null=True, blank=True)
     language = models.CharField(max_length=16, blank=True)
     content = models.TextField(blank=True)
     text = models.TextField(blank=True)
+    extracted_text = models.TextField(blank=True)
     entities = models.JSONField(default=list, blank=True)
     tags = models.JSONField(default=list, blank=True)
     dedupe_hash = models.CharField(max_length=64, unique=True)
     content_hash = models.CharField(max_length=64, blank=True)
     simhash = models.CharField(max_length=64, blank=True)
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.NORMALIZED,
+    )
     metadata = models.JSONField(default=dict, blank=True)
     ingested_at = models.DateTimeField(default=timezone.now)
     reviewed_at = models.DateTimeField(null=True, blank=True)
@@ -164,11 +206,14 @@ class NormalizedDocument(models.Model):
         ordering = ["-published_at", "-created_at"]
         indexes = [
             models.Index(fields=["source", "published_at"]),
+            models.Index(fields=["url_hash"]),
             models.Index(fields=["dedupe_hash"]),
             models.Index(fields=["content_hash"]),
             models.Index(fields=["simhash"]),
             models.Index(fields=["language"]),
+            models.Index(fields=["status"]),
             models.Index(fields=["published_at"]),
+            models.Index(fields=["fetched_at"]),
             models.Index(fields=["ingested_at"]),
         ]
 
@@ -475,11 +520,35 @@ from monitoring.phase2_models import (  # noqa: E402
     DocumentUrlReference,
     SourceReputationSnapshot,
     TopicCluster,
+    TopicClusterSlice,
+    TopicClusterSliceDocument,
+)
+from monitoring.comparison_models import (  # noqa: E402
+    ArticleEmbedding,
+    ArticleEntityMention,
+    Claim,
+    ClaimCluster,
+    ClaimClusterMember,
+    EventComparisonSnapshot,
+    EventCoverage,
+    FrameFeature,
 )
 from monitoring.operational_models import ExportArtifact, NlpRunMetric  # noqa: E402
+from monitoring.dashboard_models import (  # noqa: E402
+    CloudBudgetPolicy,
+    CloudUsageLedger,
+    ComputeProfileConfig,
+    ComputeProfileTypeSetting,
+    ComputeResourceSnapshot,
+    DashboardSetting,
+    JobRunEvent,
+    PipelineJob,
+)
+from monitoring.orchestration_models import ResourceLock, WorkerHeartbeat  # noqa: E402
 
 EventCluster = TopicCluster
 EventClusterDocument = DocumentTopic
+Entity = CanonicalEntity
 
 
 class IngestionRun(models.Model):
@@ -531,7 +600,11 @@ class IngestedItem(models.Model):
             models.Index(fields=["canonical_url"]),
         ]
         constraints = [
-            models.UniqueConstraint(fields=["source", "external_id"], condition=~models.Q(external_id=""), name="uniq_source_external_id_if_exists")
+            models.UniqueConstraint(
+                fields=["source", "external_id"],
+                condition=~models.Q(external_id=""),
+                name="uniq_source_external_id_if_exists",
+            )
         ]
 
 
@@ -550,7 +623,11 @@ class MarketInstrument(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        constraints = [models.UniqueConstraint(fields=["symbol", "exchange"], name="uniq_symbol_exchange")]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["symbol", "exchange"], name="uniq_symbol_exchange"
+            )
+        ]
 
 
 class MarketBar(models.Model):
@@ -571,8 +648,16 @@ class MarketBar(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        constraints = [models.UniqueConstraint(fields=["instrument", "source", "timeframe", "timestamp"], name="uniq_market_bar")]
-        indexes = [models.Index(fields=["instrument", "timestamp"]), models.Index(fields=["source", "timestamp"])]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["instrument", "source", "timeframe", "timestamp"],
+                name="uniq_market_bar",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["instrument", "timestamp"]),
+            models.Index(fields=["source", "timestamp"]),
+        ]
 
 
 class MarketTick(models.Model):

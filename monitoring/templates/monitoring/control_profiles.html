@@ -1,0 +1,33 @@
+{% extends "monitoring/base.html" %}
+
+{% block title %}Compute Profiles{% endblock %}
+
+{% block content %}
+<h1>Compute Profiles</h1>
+<p class="muted">Edit queue limits and default compute settings.</p>
+
+{% for profile in profiles %}
+  <section class="panel">
+    <h2>{{ profile.name }}</h2>
+    <form method="post" action="{% url 'monitoring:control-profile-update' profile.pk %}">
+      {% csrf_token %}
+      <div class="grid">
+        <label>Enabled <input type="checkbox" name="enabled" value="1" {% if profile.enabled %}checked{% endif %}></label>
+        <label>Queue <input type="checkbox" name="queue_enabled" value="1" {% if profile.queue_enabled %}checked{% endif %}></label>
+        <label>Cloud <input type="checkbox" name="cloud_enabled" value="1" {% if profile.cloud_enabled %}checked{% endif %}></label>
+        <label>CPU workers <input type="number" name="max_cpu_workers" value="{{ profile.max_cpu_workers }}" min="0"></label>
+        <label>GPU workers <input type="number" name="max_gpu_workers" value="{{ profile.max_gpu_workers }}" min="0"></label>
+        <label>Max VRAM GB <input type="number" step="0.1" name="max_vram_gb" value="{{ profile.max_vram_gb }}"></label>
+        <label>Default batch <input type="number" name="default_batch_size" value="{{ profile.default_batch_size }}"></label>
+        <label>Max batch <input type="number" name="max_batch_size" value="{{ profile.max_batch_size }}"></label>
+        <label>Default window <input type="number" name="default_window" value="{{ profile.default_window }}"></label>
+        <label>Max window <input type="number" name="max_window" value="{{ profile.max_window }}"></label>
+        <label>Precision <input name="default_precision" value="{{ profile.default_precision }}"></label>
+      </div>
+      <button type="submit">Save profile</button>
+    </form>
+  </section>
+{% empty %}
+  <p class="muted">No profiles configured.</p>
+{% endfor %}
+{% endblock %}

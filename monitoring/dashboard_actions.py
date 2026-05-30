@@ -9,13 +9,17 @@ from django.conf import settings
 from django.utils import timezone
 
 from monitoring.alerts import evaluate_alert_rules
+from monitoring.catalog_sync import sync_catalogs
 from monitoring.discovery import discover_source_candidates
 from monitoring.enrichment import enrich_document
 from monitoring.exporters import export_documents_artifact
-from monitoring.models import ExportArtifact, NormalizedDocument
+from monitoring.ingestion import IngestionService
+from monitoring.models import ExportArtifact, NormalizedDocument, Source
 from monitoring.nlp.metrics import save_nlp_run_metric
 from monitoring.nlp.pipeline import run_pipeline
+from monitoring.orchestration.scheduler import enqueue_job
 from monitoring.reputation import score_source_reputations
+from monitoring.scheduling import find_due_sources
 from monitoring.sqlite_retry import run_with_sqlite_retry
 from monitoring.topics import cluster_topics
 
@@ -60,6 +64,46 @@ def run_discover_sources_action(limit: int = 200) -> DashboardActionResult:
     return DashboardActionResult(message, {"created": created_count})
 
 
+def run_ingest_sources_once_action(limit: int = 20) -> DashboardActionResult:
+    """Run due source ingestion once from the dashboard.
+
+    Example:
+        `result = run_ingest_sources_once_action(limit=20)`
+    """
+    _sync_catalogs_when_source_registry_empty()
+    sources = find_due_sources(timezone.now(), limit)
+    succeeded_count, failed_count = _ingest_sources(sources)
+    message = f"Ingested {succeeded_count} due sources; {failed_count} failed"
+    return DashboardActionResult(
+        message, {"succeeded": succeeded_count, "failed": failed_count}
+    )
+
+
+def run_ingest_sources_auto_run_action(limit: int = 20) -> DashboardActionResult:
+    """Queue due source ingestion for a local dashboard worker.
+
+    Example:
+        `result = run_ingest_sources_auto_run_action(limit=20)`
+    """
+    command = f"python manage.py ingest_due_sources --limit {limit}"
+    job = enqueue_job("ingestion", "local_cpu_low", "cpu", {"command": command})
+    return DashboardActionResult(
+        f"Queued source ingestion job {job.pk}", {"job_id": job.pk}
+    )
+
+
+def run_sync_catalogs_action(dry_run: bool = False) -> DashboardActionResult:
+    """Synchronize JSON catalogs from the operations dashboard.
+
+    Example:
+        `result = run_sync_catalogs_action(dry_run=False)`
+    """
+    results = sync_catalogs(feeds=True, dry_run=dry_run)
+    count = sum(result.source_count for result in results)
+    mode = "validated" if dry_run else "synchronized"
+    return DashboardActionResult(f"Catalogs {mode}: {count} feed rows", {"rows": count})
+
+
 def run_evaluate_alerts_action(lookback_hours: int = 24) -> DashboardActionResult:
     """Evaluate alert rules from the dashboard.
 
@@ -76,17 +120,20 @@ def run_evaluate_alerts_action(lookback_hours: int = 24) -> DashboardActionResul
 def run_cluster_topics_action(
     window_hours: int = 72,
     min_documents: int = 3,
+    slice_hours: int = 24,
 ) -> DashboardActionResult:
-    """Build rolling topic clusters from the dashboard.
+    """Update parent topic clusters and deterministic time slices.
 
     Example:
-        `result = run_cluster_topics_action(window_hours=72)`
+        `result = run_cluster_topics_action(window_hours=72, slice_hours=24)`
     """
-    cluster_count = cluster_topics(
-        window_hours=window_hours, min_documents=min_documents
+    slice_count = cluster_topics(
+        window_hours=window_hours,
+        min_documents=min_documents,
+        slice_hours=slice_hours,
     )
-    message = f"Built {cluster_count} topic clusters"
-    return DashboardActionResult(message, {"clusters": cluster_count})
+    message = f"Updated {slice_count} topic slices"
+    return DashboardActionResult(message, {"slices": slice_count})
 
 
 def run_score_reputation_action(window_days: int = 30) -> DashboardActionResult:
@@ -130,3 +177,23 @@ def _dashboard_export_path() -> Path:
     stamp = timezone.now().strftime("%Y%m%d-%H%M%S")
     output_dir = Path(settings.PARQUET_EXPORT_DIR)
     return output_dir / f"documents-{stamp}.parquet"
+
+
+def _sync_catalogs_when_source_registry_empty() -> None:
+    if Source.objects.filter(is_enabled=True).exists():
+        return
+    sync_catalogs(feeds=True, dry_run=False)
+
+
+def _ingest_sources(sources: list[Source]) -> tuple[int, int]:
+    service = IngestionService()
+    succeeded_count = 0
+    failed_count = 0
+    for source in sources:
+        try:
+            service.ingest_source(source)
+        except Exception:
+            failed_count += 1
+            continue
+        succeeded_count += 1
+    return succeeded_count, failed_count

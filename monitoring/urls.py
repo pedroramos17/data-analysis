@@ -1,13 +1,21 @@
 """URL routes for browsing normalized public-source records."""
 
-from django.urls import path
+from django.urls import include, path
 
-from monitoring import alert_views, candidate_views, export_views, views
+from monitoring import (
+    alert_views,
+    candidate_views,
+    export_views,
+    intelligence_views,
+    views,
+)
 
 app_name = "monitoring"
 
 urlpatterns = [
     path("", views.DashboardView.as_view(), name="dashboard"),
+    path("dashboard/", include("monitoring.dashboard_control_urls")),
+    path("api/dashboard/", include("monitoring.dashboard_api_urls")),
     path("documents/", views.DocumentListView.as_view(), name="document-list"),
     path("alerts/", views.AlertHitListView.as_view(), name="alert-hit-list"),
     path(
@@ -49,7 +57,52 @@ urlpatterns = [
         export_views.parquet_rows_api,
         name="export-artifact-rows-api",
     ),
+    path(
+        "intelligence/",
+        intelligence_views.IntelligenceDashboardView.as_view(),
+        name="intelligence-dashboard",
+    ),
+    path(
+        "intelligence/factors/",
+        intelligence_views.IntelligenceFactorListView.as_view(),
+        name="intelligence-factor-list",
+    ),
+    path(
+        "intelligence/factors/<str:name>/",
+        intelligence_views.IntelligenceFactorDetailView.as_view(),
+        name="intelligence-factor-detail",
+    ),
+    path(
+        "intelligence/factors/<str:name>/rows/",
+        intelligence_views.intelligence_factor_rows_api,
+        name="intelligence-factor-rows-api",
+    ),
+    path(
+        "intelligence/actions/register/",
+        intelligence_views.register_symbolic_factors_action,
+        name="intelligence-register-action",
+    ),
+    path(
+        "intelligence/actions/compute/",
+        intelligence_views.compute_symbolic_factors_action,
+        name="intelligence-compute-action",
+    ),
+    path(
+        "intelligence/actions/search/",
+        intelligence_views.search_symbolic_factors_action,
+        name="intelligence-search-action",
+    ),
+    path(
+        "intelligence/actions/evaluate/",
+        intelligence_views.evaluate_symbolic_factor_action,
+        name="intelligence-evaluate-action",
+    ),
     path("topics/", views.TopicClusterListView.as_view(), name="topic-cluster-list"),
+    path(
+        "topics/<int:pk>/",
+        views.TopicClusterDetailView.as_view(),
+        name="topic-cluster-detail",
+    ),
     path("sources/", views.SourceListView.as_view(), name="source-list"),
     path("sources/<int:pk>/", views.SourceDetailView.as_view(), name="source-detail"),
     path("failures/", views.DeadLetterListView.as_view(), name="dead-letter-list"),
@@ -62,6 +115,21 @@ urlpatterns = [
         "actions/discover-sources/",
         views.discover_sources_action,
         name="discover-sources-action",
+    ),
+    path(
+        "actions/ingest-sources-run-once/",
+        views.ingest_sources_run_once_action,
+        name="ingest-sources-run-once-action",
+    ),
+    path(
+        "actions/ingest-sources-auto-run/",
+        views.ingest_sources_auto_run_action,
+        name="ingest-sources-auto-run-action",
+    ),
+    path(
+        "actions/sync-catalogs/",
+        views.sync_catalogs_action,
+        name="sync-catalogs-action",
     ),
     path(
         "actions/evaluate-alerts/",
