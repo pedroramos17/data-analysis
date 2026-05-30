@@ -1,0 +1,19 @@
+{% extends "monitoring/base.html" %}
+
+{% block title %}Extract {{ paper.title }}{% endblock %}
+
+{% block content %}
+<h1>Extract {{ paper.title }}</h1>
+<form method="post" class="panel">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Extract Methodology</button>
+</form>
+{% if extraction %}
+  <section class="panel">
+    <h2>Extraction</h2>
+    <p>Status: {{ extraction.status }} | Support: {{ extraction.support_status }}</p>
+    <pre>{{ extraction.extraction_json }}</pre>
+  </section>
+{% endif %}
+{% endblock %}
