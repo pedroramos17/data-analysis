@@ -42,6 +42,7 @@ python manage.py quant4_ingest_prices --name spy-daily --source local-csv --freq
 python manage.py quant4_prepare_windows --dataset-id 1 --name walk-forward-1
 python manage.py quant4_detect_regimes --returns-json "[0.01,-0.02]" --prices-json "[100,98]" --data-start 2024-01-01 --data-end 2024-01-02 --split-start 2024-01-02 --split-end 2024-01-02
 python manage.py quant4_run_risk --returns-json "[0.01,-0.02]" --prices-json "[100,98]" --volumes-json "[1000,1200]" --data-start 2024-01-01 --data-end 2024-01-02 --split-start 2024-01-02 --split-end 2024-01-02
+python manage.py quant4_build_graphs --series-json "{\"AAA\":[[\"2024-01-01\",1],[\"2024-01-02\",2]],\"BBB\":[[\"2024-01-01\",1],[\"2024-01-02\",3]]}" --window-end 2024-01-02
 ```
 
 These commands register local metadata only. Quant4 does not place orders,
@@ -59,3 +60,9 @@ Risk reports separate `forecast_risk`, `portfolio_risk`, `liquidity_risk`,
 COVID, rate shock, commodity shock, FX devaluation, correlation breakdown,
 liquidity freeze, and futures roll shock. These outputs are research metadata,
 not execution signals.
+
+## Graph And Topology Lab
+
+See `docs/quant4_graphs.md` and `docs/quant4_tda.md`. Graph snapshots store
+node, edge, and adjacency paths in shared `GraphSnapshot` rows so risk, regime,
+and model modules can consume the same topology artifacts.

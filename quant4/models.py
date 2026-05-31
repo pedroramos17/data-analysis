@@ -234,6 +234,9 @@ class GraphSnapshot(Quant4RunRecord):
 
     node_count = models.PositiveIntegerField(default=0)
     edge_count = models.PositiveIntegerField(default=0)
+    node_path = models.CharField(max_length=1200, blank=True)
+    edge_path = models.CharField(max_length=1200, blank=True)
+    adjacency_path = models.CharField(max_length=1200, blank=True)
 
 
 class PortfolioRun(Quant4RunRecord):
