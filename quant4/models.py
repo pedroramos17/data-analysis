@@ -242,6 +242,10 @@ class GraphSnapshot(Quant4RunRecord):
 class PortfolioRun(Quant4RunRecord):
     """A portfolio optimizer research run."""
 
+    weights_path = models.CharField(max_length=1200, blank=True)
+    trades_path = models.CharField(max_length=1200, blank=True)
+    risk_report_json = models.JSONField(default=dict, blank=True)
+
 
 class ModelRun(Quant4RunRecord):
     """A registered model run."""
