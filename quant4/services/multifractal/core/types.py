@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 SummaryValue = float | int | str | bool
+MetadataValue = SummaryValue | None
 
 
 def default_mfdfa_q_grid() -> tuple[float, ...]:
@@ -94,4 +95,46 @@ class MFDFAResult:
     scaling_r2_by_q: dict[str, float]
     valid_scale_count: int
     summary: dict[str, SummaryValue]
+    warnings: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class MultifractalMethodResult:
+    """Common result object for additional multifractal methods.
+
+    Example:
+        `result = run_mfdma(returns, MFDFAConfig())`
+    """
+
+    method: str
+    config: MFDFAConfig
+    q_grid: tuple[float, ...]
+    scales: tuple[int, ...]
+    fluctuation_functions: dict[str, tuple[tuple[int, float], ...]]
+    spectrum: MultifractalSpectrum
+    diagnostics_by_q: dict[str, ScalingDiagnostics]
+    scaling_r2_by_q: dict[str, float]
+    valid_scale_count: int
+    summary: dict[str, SummaryValue]
+    warnings: tuple[str, ...]
+    metadata: dict[str, MetadataValue]
+
+
+@dataclass(frozen=True, slots=True)
+class MFDCCAResult:
+    """Joint multifractal detrended cross-correlation output.
+
+    Example:
+        `result = run_mfdcca(left_returns, right_returns, MFDFAConfig())`
+    """
+
+    method: str
+    config: MFDFAConfig
+    q_grid: tuple[float, ...]
+    scales: tuple[int, ...]
+    q_cross_fluctuations: dict[str, tuple[tuple[int, float], ...]]
+    scale_correlations: dict[str, float]
+    diagnostics_by_q: dict[str, ScalingDiagnostics]
+    joint_metrics: dict[str, SummaryValue]
+    segment_bounds_by_scale: dict[str, tuple[tuple[int, int], ...]]
     warnings: tuple[str, ...]

@@ -5,6 +5,7 @@ from __future__ import annotations
 import math
 from collections.abc import Sequence
 
+from quant4.services.multifractal.core.detrending import detrended_variance
 from quant4.services.multifractal.core.scaling import (
     build_scaling_diagnostic,
     default_scale_grid,
@@ -109,7 +110,7 @@ def _segment_variances(
 ) -> tuple[float, ...]:
     starts = _segment_starts(len(profile), scale, config.use_reverse_segments)
     return tuple(
-        _detrended_variance(profile[start : start + scale], config.detrending_order)
+        detrended_variance(profile[start : start + scale], config.detrending_order)
         for start in starts
     )
 
@@ -127,15 +128,6 @@ def _segment_starts(
     return tuple(forward + backward)
 
 
-def _detrended_variance(segment: Sequence[float], order: int) -> float:
-    coefficients = _polynomial_fit(segment, order)
-    residuals = [
-        value - _evaluate_polynomial(coefficients, float(index))
-        for index, value in enumerate(segment)
-    ]
-    return sum(residual * residual for residual in residuals) / len(residuals)
-
-
 def _fluctuation_at_q(
     variances: Sequence[float],
     q: float,
@@ -149,64 +141,6 @@ def _fluctuation_at_q(
         sum(value ** (q / 2.0) for value in safe_variances) / len(safe_variances)
     )
     return mean_power ** (1.0 / q)
-
-
-def _polynomial_fit(values: Sequence[float], order: int) -> list[float]:
-    size = order + 1
-    matrix = [
-        [
-            sum(float(index) ** (row + col) for index in range(len(values)))
-            for col in range(size)
-        ]
-        for row in range(size)
-    ]
-    rhs = [
-        sum(value * (float(index) ** row) for index, value in enumerate(values))
-        for row in range(size)
-    ]
-    return _solve_linear_system(matrix, rhs)
-
-
-def _solve_linear_system(matrix: list[list[float]], rhs: list[float]) -> list[float]:
-    augmented = [row[:] + [rhs[index]] for index, row in enumerate(matrix)]
-    for pivot_index in range(len(rhs)):
-        _pivot_rows(augmented, pivot_index)
-        _normalize_pivot_row(augmented, pivot_index)
-        _eliminate_column(augmented, pivot_index)
-    return [row[-1] for row in augmented]
-
-
-def _pivot_rows(matrix: list[list[float]], pivot_index: int) -> None:
-    best = max(
-        range(pivot_index, len(matrix)),
-        key=lambda row: abs(matrix[row][pivot_index]),
-    )
-    if abs(matrix[best][pivot_index]) < 1e-12:
-        raise ValueError("Invalid polynomial fit matrix; expected full-rank system")
-    matrix[pivot_index], matrix[best] = matrix[best], matrix[pivot_index]
-
-
-def _normalize_pivot_row(matrix: list[list[float]], pivot_index: int) -> None:
-    pivot = matrix[pivot_index][pivot_index]
-    matrix[pivot_index] = [value / pivot for value in matrix[pivot_index]]
-
-
-def _eliminate_column(matrix: list[list[float]], pivot_index: int) -> None:
-    for row_index, row in enumerate(matrix):
-        if row_index == pivot_index:
-            continue
-        factor = row[pivot_index]
-        matrix[row_index] = [
-            value - factor * matrix[pivot_index][index]
-            for index, value in enumerate(row)
-        ]
-
-
-def _evaluate_polynomial(coefficients: Sequence[float], x_value: float) -> float:
-    return sum(
-        coefficient * (x_value**power)
-        for power, coefficient in enumerate(coefficients)
-    )
 
 
 def _resolve_scales(length: int, config: MFDFAConfig) -> tuple[int, ...]:
