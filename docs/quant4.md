@@ -46,6 +46,7 @@ python manage.py quant4_build_graphs --series-json "{\"AAA\":[[\"2024-01-01\",1]
 python manage.py quant4_optimize_portfolio --symbols AAA,BBB --optimizer equal_weight --data-start 2024-01-01 --data-end 2024-01-31 --split-start 2024-01-31 --split-end 2024-01-31
 python manage.py quant4_ingest_lob --input-path data/books.jsonl --venue-type crypto
 python manage.py quant4_train_lob_model --input-path data/books.jsonl --data-start 2024-01-01 --data-end 2024-01-01 --split-start 2024-01-01 --split-end 2024-01-01
+python manage.py quant4_run_full_experiment --name global_macro_quant4_v1 --symbols SPY,QQQ --timeframes 1d --no-live-trading --dry-run
 ```
 
 These commands register local metadata only. Quant4 does not place orders,
@@ -80,3 +81,9 @@ trades, metrics, and risk reports in shared `PortfolioRun` rows.
 See `docs/quant4_lob.md`. LOB runs use shared `LOBRun` rows for baseline model
 metrics and local artifact paths. DeepLOB and TCN-LOB remain optional PyTorch
 stubs, and FX depth support depends on the venue data supplied locally.
+
+## Full Experiment Orchestration
+
+See `docs/quant4_full_experiment.md`. The full experiment command builds the
+safe Quant4 DAG in dry-run mode by default and records skipped steps instead of
+fabricating results when data or optional dependencies are unavailable.
