@@ -44,6 +44,8 @@ python manage.py quant4_detect_regimes --returns-json "[0.01,-0.02]" --prices-js
 python manage.py quant4_run_risk --returns-json "[0.01,-0.02]" --prices-json "[100,98]" --volumes-json "[1000,1200]" --data-start 2024-01-01 --data-end 2024-01-02 --split-start 2024-01-02 --split-end 2024-01-02
 python manage.py quant4_build_graphs --series-json "{\"AAA\":[[\"2024-01-01\",1],[\"2024-01-02\",2]],\"BBB\":[[\"2024-01-01\",1],[\"2024-01-02\",3]]}" --window-end 2024-01-02
 python manage.py quant4_optimize_portfolio --symbols AAA,BBB --optimizer equal_weight --data-start 2024-01-01 --data-end 2024-01-31 --split-start 2024-01-31 --split-end 2024-01-31
+python manage.py quant4_ingest_lob --input-path data/books.jsonl --venue-type crypto
+python manage.py quant4_train_lob_model --input-path data/books.jsonl --data-start 2024-01-01 --data-end 2024-01-01 --split-start 2024-01-01 --split-end 2024-01-01
 ```
 
 These commands register local metadata only. Quant4 does not place orders,
@@ -72,3 +74,9 @@ and model modules can consume the same topology artifacts.
 
 See `docs/quant4_portfolio.md`. Portfolio runs store reusable weights, simulated
 trades, metrics, and risk reports in shared `PortfolioRun` rows.
+
+## LOB And Microstructure Lab
+
+See `docs/quant4_lob.md`. LOB runs use shared `LOBRun` rows for baseline model
+metrics and local artifact paths. DeepLOB and TCN-LOB remain optional PyTorch
+stubs, and FX depth support depends on the venue data supplied locally.
