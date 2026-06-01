@@ -77,6 +77,7 @@ def optimize_multifractal_adjusted_portfolio(
     constraints: MultifractalPortfolioConstraints | None = None,
     current_weights: Mapping[str, float] | None = None,
     graph_clusters: Mapping[str, str] | None = None,
+    asset_metadata: Mapping[str, Mapping[str, str]] | None = None,
 ) -> MultifractalPortfolioResult:
     """Allocate with variance, multifractal, regime, and graph penalties.
 
@@ -86,8 +87,21 @@ def optimize_multifractal_adjusted_portfolio(
     active_constraints = constraints or MultifractalPortfolioConstraints()
     base = inverse_variance_scores(symbols, covariance)
     penalized = _penalized_scores(base, risk_features, regime_labels or {})
-    weights = _constrained_weights(penalized, active_constraints, graph_clusters or {})
-    return _result(weights, covariance, risk_features, current_weights, graph_clusters)
+    weights = _constrained_weights(
+        penalized,
+        active_constraints,
+        graph_clusters or {},
+        asset_metadata or {},
+    )
+    return _result(
+        weights,
+        covariance,
+        risk_features,
+        current_weights,
+        graph_clusters,
+        active_constraints,
+        asset_metadata,
+    )
 
 
 def _penalized_scores(
@@ -109,13 +123,15 @@ def _constrained_weights(
     scores: Mapping[str, float],
     constraints: MultifractalPortfolioConstraints,
     graph_clusters: Mapping[str, str],
+    asset_metadata: Mapping[str, Mapping[str, str]],
 ) -> dict[str, float]:
     raw = _normalize(scores, constraints.budget)
-    try:
-        return apply_multifractal_constraints(raw, constraints, {}, graph_clusters)
-    except ValueError:
-        fallback = _equal_scores(scores)
-        return apply_multifractal_constraints(fallback, constraints, {}, {})
+    return apply_multifractal_constraints(
+        raw,
+        constraints,
+        asset_metadata,
+        graph_clusters,
+    )
 
 
 def _result(
@@ -124,8 +140,9 @@ def _result(
     risk_features: Mapping[str, Mapping[str, float]],
     current_weights: Mapping[str, float] | None,
     graph_clusters: Mapping[str, str] | None,
+    constraints: MultifractalPortfolioConstraints,
+    asset_metadata: Mapping[str, Mapping[str, str]] | None,
 ) -> MultifractalPortfolioResult:
-    constraints = MultifractalPortfolioConstraints()
     return MultifractalPortfolioResult(
         weights=weights,
         risk_contribution=risk_contribution(weights, covariance),
@@ -133,7 +150,12 @@ def _result(
             weights, risk_features
         ),
         turnover_estimate=_turnover(weights, current_weights or {}),
-        constraints_report=constraints_report(weights, constraints, graph_clusters),
+        constraints_report=constraints_report(
+            weights,
+            constraints,
+            graph_clusters,
+            asset_metadata,
+        ),
         warnings=("research_allocation_not_execution",),
     )
 

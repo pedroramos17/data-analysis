@@ -68,3 +68,72 @@ class Quant4MultifractalPortfolioTests(SimpleTestCase):
         )
 
         self.assertIn("cluster_exposure", result.constraints_report)
+
+    def test_infeasible_cluster_limit_fails_clearly(self) -> None:
+        """Cluster limits are never bypassed by optimizer fallback."""
+        from quant4.services.multifractal.portfolio.constraints import (
+            MultifractalPortfolioConstraints,
+        )
+        from quant4.services.multifractal.portfolio.multifractal_optimizer import (
+            optimize_multifractal_adjusted_portfolio,
+        )
+
+        with self.assertRaisesRegex(ValueError, "Invalid cluster exposure"):
+            optimize_multifractal_adjusted_portfolio(
+                ["AAA", "BBB"],
+                [[0.02, 0.0], [0.0, 0.02]],
+                risk_features={},
+                constraints=MultifractalPortfolioConstraints(cluster_limit=0.80),
+                graph_clusters={"AAA": "cluster_1", "BBB": "cluster_1"},
+            )
+
+    def test_constraints_report_uses_caller_constraints(self) -> None:
+        """Constraint reports include the actual constraint envelope used."""
+        from quant4.services.multifractal.portfolio.constraints import (
+            MultifractalPortfolioConstraints,
+        )
+        from quant4.services.multifractal.portfolio.multifractal_optimizer import (
+            optimize_multifractal_adjusted_portfolio,
+        )
+
+        result = optimize_multifractal_adjusted_portfolio(
+            ["AAA", "BBB"],
+            [[0.02, 0.0], [0.0, 0.03]],
+            risk_features={},
+            constraints=MultifractalPortfolioConstraints(
+                max_weight=0.70,
+                cluster_limit=0.90,
+            ),
+            graph_clusters={"AAA": "cluster_1", "BBB": "cluster_2"},
+        )
+
+        self.assertTrue(result.constraints_report["cluster_limit_ok"])
+        self.assertTrue(result.constraints_report["asset_class_limit_ok"])
+        self.assertEqual(result.constraints_report["constraints"]["max_weight"], 0.70)
+        self.assertEqual(
+            result.constraints_report["constraints"]["cluster_limit"],
+            0.90,
+        )
+
+    def test_infeasible_asset_class_limit_fails_clearly(self) -> None:
+        """Asset-class limits are enforced when metadata is provided."""
+        from quant4.services.multifractal.portfolio.constraints import (
+            MultifractalPortfolioConstraints,
+        )
+        from quant4.services.multifractal.portfolio.multifractal_optimizer import (
+            optimize_multifractal_adjusted_portfolio,
+        )
+
+        with self.assertRaisesRegex(ValueError, "Invalid asset_class exposure"):
+            optimize_multifractal_adjusted_portfolio(
+                ["AAA", "BBB"],
+                [[0.02, 0.0], [0.0, 0.02]],
+                risk_features={},
+                constraints=MultifractalPortfolioConstraints(
+                    asset_class_limits={"stock": 0.80}
+                ),
+                asset_metadata={
+                    "AAA": {"asset_class": "stock"},
+                    "BBB": {"asset_class": "stock"},
+                },
+            )

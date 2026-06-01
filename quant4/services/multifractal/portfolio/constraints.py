@@ -44,12 +44,26 @@ def constraints_report(
     weights: Mapping[str, float],
     constraints: MultifractalPortfolioConstraints,
     graph_clusters: Mapping[str, str] | None = None,
+    asset_metadata: Mapping[str, Mapping[str, str]] | None = None,
 ) -> dict[str, object]:
     """Return explicit constraint diagnostics for reports."""
+    metadata = asset_metadata or {}
+    clusters = graph_clusters or {}
     return {
         "budget_ok": abs(sum(weights.values()) - constraints.budget) <= 1e-6,
         "max_weight_ok": max(weights.values(), default=0.0) <= constraints.max_weight,
-        "cluster_exposure": cluster_exposures(weights, graph_clusters or {}),
+        "asset_class_limit_ok": _asset_class_limits_ok(
+            weights,
+            constraints,
+            metadata,
+        ),
+        "cluster_limit_ok": _cluster_limits_ok(
+            weights,
+            constraints.cluster_limit,
+            clusters,
+        ),
+        "cluster_exposure": cluster_exposures(weights, clusters),
+        "constraints": _constraint_payload(constraints),
     }
 
 
@@ -136,6 +150,18 @@ def _validate_asset_class(
         )
 
 
+def _asset_class_limits_ok(
+    weights: Mapping[str, float],
+    constraints: MultifractalPortfolioConstraints,
+    asset_metadata: Mapping[str, Mapping[str, str]],
+) -> bool:
+    exposures = _asset_class_exposures(weights, asset_metadata)
+    return all(
+        exposure <= constraints.asset_class_limits.get(asset_class, 1.0) + 1e-12
+        for asset_class, exposure in exposures.items()
+    )
+
+
 def _asset_class_exposures(
     weights: Mapping[str, float],
     asset_metadata: Mapping[str, Mapping[str, str]],
@@ -160,3 +186,26 @@ def _validate_clusters(
             f"Invalid cluster exposure {cluster}={exposure!r}; "
             f"expected <= {cluster_limit!r}"
         )
+
+
+def _cluster_limits_ok(
+    weights: Mapping[str, float],
+    cluster_limit: float,
+    graph_clusters: Mapping[str, str],
+) -> bool:
+    return all(
+        exposure <= cluster_limit + 1e-12
+        for exposure in cluster_exposures(weights, graph_clusters).values()
+    )
+
+
+def _constraint_payload(
+    constraints: MultifractalPortfolioConstraints,
+) -> dict[str, object]:
+    return {
+        "budget": constraints.budget,
+        "long_only": constraints.long_only,
+        "max_weight": constraints.max_weight,
+        "asset_class_limits": dict(constraints.asset_class_limits),
+        "cluster_limit": constraints.cluster_limit,
+    }
