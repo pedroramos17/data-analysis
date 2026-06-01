@@ -6,7 +6,10 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('quant4', '0003_graphsnapshot_adjacency_path_graphsnapshot_edge_path_and_more'),
+        (
+            'quant4',
+            '0003_graphsnapshot_adjacency_path_graphsnapshot_edge_path_and_more',
+        ),
     ]
 
     operations = [
