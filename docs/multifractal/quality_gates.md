@@ -18,3 +18,9 @@ pairs, and synthetic LOB event streams.
 
 The gates are research validation only and include no live-trading or broker
 commands.
+
+Named smoke-test defaults are kept in
+`quant4.services.multifractal.defaults` so CLI, reporting, feature, and quality
+gate code use the same values instead of hidden literals. The default diagnostic
+seed is `17`, with `4` bootstrap samples and `2` finite-size simulations for
+fast local smoke runs.
