@@ -5,6 +5,16 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
+from quant4.services.multifractal.defaults import (
+    REGIME_DELTA_ALPHA_FLOOR,
+    REGIME_MEAN_REVERSION_HURST_THRESHOLD,
+    REGIME_MIN_PROBABILITY,
+    REGIME_PRIMARY_PROBABILITY,
+    REGIME_STRESS_DRAWDOWN_THRESHOLD,
+    REGIME_STRESS_LIQUIDITY_THRESHOLD,
+    REGIME_TREND_HURST_THRESHOLD,
+    REGIME_VOLATILITY_FLOOR,
+)
 from quant4.services.multifractal.regime.change_points import (
     ChangePoint,
     detect_cusum_shifts,
@@ -125,15 +135,17 @@ def _label_at(
 
 
 def _rule_label(metrics: Mapping[str, float]) -> str:
-    if metrics["drawdown"] <= -0.15 or metrics["liquidity"] >= 0.85:
+    if metrics["drawdown"] <= REGIME_STRESS_DRAWDOWN_THRESHOLD:
+        return STRESS
+    if metrics["liquidity"] >= REGIME_STRESS_LIQUIDITY_THRESHOLD:
         return STRESS
     if metrics["delta_alpha"] >= metrics["delta_alpha_high"]:
         return TURBULENT
     if metrics["volatility"] >= metrics["volatility_high"]:
         return TURBULENT
-    if metrics["hurst_h2"] >= 0.58:
+    if metrics["hurst_h2"] >= REGIME_TREND_HURST_THRESHOLD:
         return TREND
-    if metrics["hurst_h2"] <= 0.42:
+    if metrics["hurst_h2"] <= REGIME_MEAN_REVERSION_HURST_THRESHOLD:
         return MEAN_REVERSION
     return CALM
 
@@ -150,8 +162,16 @@ def _metrics(
         "volatility": _value(current, "realized_volatility", 0.0),
         "drawdown": _value(current, "drawdown", 0.0),
         "liquidity": _value(current, "liquidity_proxy", 0.0),
-        "delta_alpha_high": _adaptive_high(history, "delta_alpha", 0.45),
-        "volatility_high": _adaptive_high(history, "realized_volatility", 0.025),
+        "delta_alpha_high": _adaptive_high(
+            history,
+            "delta_alpha",
+            REGIME_DELTA_ALPHA_FLOOR,
+        ),
+        "volatility_high": _adaptive_high(
+            history,
+            "realized_volatility",
+            REGIME_VOLATILITY_FLOOR,
+        ),
     }
 
 
@@ -168,9 +188,13 @@ def _adaptive_high(
 
 
 def _probabilities(label: str) -> dict[str, float]:
-    low = 0.05
-    remaining = (1.0 - 0.75) / (len(LABELS) - 1)
-    return {name: 0.75 if name == label else max(low, remaining) for name in LABELS}
+    remaining = (1.0 - REGIME_PRIMARY_PROBABILITY) / (len(LABELS) - 1)
+    return {
+        name: REGIME_PRIMARY_PROBABILITY
+        if name == label
+        else max(REGIME_MIN_PROBABILITY, remaining)
+        for name in LABELS
+    }
 
 
 def _transition_table(labels: Sequence[MultifractalRegimeLabel]) -> dict[str, int]:

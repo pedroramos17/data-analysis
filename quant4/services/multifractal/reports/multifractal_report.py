@@ -8,9 +8,16 @@ from dataclasses import asdict, dataclass
 from quant4.services.multifractal.core.diagnostics import run_multifractal_diagnostics
 from quant4.services.multifractal.core.mfdfa import run_mfdfa
 from quant4.services.multifractal.core.types import MFDFAConfig
+from quant4.services.multifractal.defaults import (
+    DEFAULT_DIAGNOSTIC_SEED,
+    DIAGNOSTIC_BOOTSTRAP_COUNT,
+    DIAGNOSTIC_FINITE_SIZE_SIMULATIONS,
+    REPORT_RISK_DELTA_ALPHA,
+)
 from quant4.services.multifractal.portfolio.multifractal_optimizer import (
     optimize_multifractal_adjusted_portfolio,
 )
+from quant4.services.multifractal.regime.features import build_regime_feature_rows
 from quant4.services.multifractal.regime.multifractal_regime import (
     detect_multifractal_regimes,
 )
@@ -65,9 +72,9 @@ def build_multifractal_research_report(
     diagnostics = run_multifractal_diagnostics(
         series,
         active_config,
-        seed=17,
-        bootstrap_count=4,
-        finite_size_simulations=2,
+        seed=DEFAULT_DIAGNOSTIC_SEED,
+        bootstrap_count=DIAGNOSTIC_BOOTSTRAP_COUNT,
+        finite_size_simulations=DIAGNOSTIC_FINITE_SIZE_SIMULATIONS,
     )
     sections = _sections(symbol, series, mfdfa.summary, diagnostics.attribution)
     return MultifractalResearchReport(
@@ -85,8 +92,11 @@ def _sections(
     mfdfa_summary: Mapping[str, object],
     attribution: str,
 ) -> dict[str, object]:
-    risk = compute_asset_multifractal_risk(series, {"delta_alpha": 0.2})
-    regimes = detect_multifractal_regimes(_regime_rows(series))
+    risk = compute_asset_multifractal_risk(
+        series,
+        {"delta_alpha": REPORT_RISK_DELTA_ALPHA},
+    )
+    regimes = detect_multifractal_regimes(build_regime_feature_rows(series))
     portfolio = optimize_multifractal_adjusted_portfolio(
         [symbol],
         [[max(risk.risk_score, 1e-6)]],
@@ -133,18 +143,4 @@ def _markdown_lines(report: MultifractalResearchReport) -> list[str]:
         "",
         "## Interpretation Cautions",
         "- This report is not a prediction, trading signal, or validity claim.",
-    ]
-
-
-def _regime_rows(series: Sequence[float]) -> list[dict[str, float]]:
-    return [
-        {
-            "hurst_h2": 0.5,
-            "delta_alpha": abs(float(value)),
-            "spectrum_asymmetry": float(value),
-            "tau_nonlinearity": abs(float(value)),
-            "realized_volatility": abs(float(value)),
-            "drawdown": min(0.0, float(value)),
-        }
-        for value in series
     ]

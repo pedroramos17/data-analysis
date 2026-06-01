@@ -6,6 +6,11 @@ from django.core.management.base import BaseCommand, CommandParser
 
 from quant4.services.multifractal.cli_support import json_text, parse_float_series
 from quant4.services.multifractal.core.diagnostics import run_multifractal_diagnostics
+from quant4.services.multifractal.defaults import (
+    DEFAULT_DIAGNOSTIC_SEED,
+    DIAGNOSTIC_BOOTSTRAP_COUNT,
+    DIAGNOSTIC_FINITE_SIZE_SIMULATIONS,
+)
 
 
 class Command(BaseCommand):
@@ -21,8 +26,8 @@ class Command(BaseCommand):
         """Execute diagnostics with small deterministic defaults."""
         report = run_multifractal_diagnostics(
             parse_float_series(str(options["series"])),
-            seed=17,
-            bootstrap_count=4,
-            finite_size_simulations=2,
+            seed=DEFAULT_DIAGNOSTIC_SEED,
+            bootstrap_count=DIAGNOSTIC_BOOTSTRAP_COUNT,
+            finite_size_simulations=DIAGNOSTIC_FINITE_SIZE_SIMULATIONS,
         )
         self.stdout.write(json_text(report.to_json_dict()))

@@ -5,6 +5,9 @@ from __future__ import annotations
 import json
 from collections.abc import Mapping, Sequence
 
+from quant4.services.multifractal.defaults import DEFAULT_CLI_SERIES
+from quant4.services.multifractal.regime.features import build_regime_feature_rows
+
 
 def parse_float_series(raw_value: str) -> list[float]:
     """Parse a comma-separated finite numeric series.
@@ -39,17 +42,7 @@ def diagonal_covariance(variances: Sequence[float]) -> list[list[float]]:
 
 def regime_feature_rows(series: Sequence[float]) -> list[dict[str, float]]:
     """Build simple rolling feature rows for CLI regime smoke runs."""
-    return [
-        {
-            "hurst_h2": 0.5,
-            "delta_alpha": abs(float(value)),
-            "spectrum_asymmetry": float(value),
-            "tau_nonlinearity": abs(float(value)),
-            "realized_volatility": abs(float(value)),
-            "drawdown": min(0.0, float(value)),
-        }
-        for value in series
-    ]
+    return build_regime_feature_rows(series)
 
 
 def json_text(payload: Mapping[str, object]) -> str:
@@ -59,4 +52,4 @@ def json_text(payload: Mapping[str, object]) -> str:
 
 def default_cli_series() -> list[float]:
     """Return a deterministic fallback series for smoke commands."""
-    return [0.01, -0.02, 0.015, -0.005] * 16
+    return list(DEFAULT_CLI_SERIES)

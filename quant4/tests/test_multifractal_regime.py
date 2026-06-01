@@ -61,6 +61,18 @@ class Quant4MultifractalRegimeTests(SimpleTestCase):
         self.assertIn("transition_table", payload)
         self.assertIn("not a trading signal", report.to_markdown())
 
+    def test_shared_regime_feature_rows_match_cli_helper(self) -> None:
+        """CLI-facing regime rows are built by the shared helper."""
+        from quant4.services.multifractal.cli_support import regime_feature_rows
+        from quant4.services.multifractal.regime.features import (
+            build_regime_feature_rows,
+        )
+
+        series = [0.01, -0.02, 0.0]
+
+        self.assertEqual(regime_feature_rows(series), build_regime_feature_rows(series))
+        self.assertEqual(build_regime_feature_rows(series)[1]["drawdown"], -0.02)
+
 
 def _feature_rows(levels: list[float]) -> list[dict[str, float]]:
     rows: list[dict[str, float]] = []

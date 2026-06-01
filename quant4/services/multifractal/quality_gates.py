@@ -5,12 +5,17 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from quant4.services.multifractal.core.mfdfa import run_mfdfa
+from quant4.services.multifractal.defaults import (
+    DEFAULT_DIAGNOSTIC_SEED,
+    REPORT_RISK_DELTA_ALPHA,
+)
 from quant4.services.multifractal.lob.multifractal_lob import (
     analyze_lob_multifractality,
 )
 from quant4.services.multifractal.portfolio.multifractal_optimizer import (
     optimize_multifractal_adjusted_portfolio,
 )
+from quant4.services.multifractal.regime.features import build_regime_feature_rows
 from quant4.services.multifractal.regime.multifractal_regime import (
     detect_multifractal_regimes,
 )
@@ -59,7 +64,7 @@ def quality_gate_matrix() -> list[QualityGate]:
     ]
 
 
-def run_integration_smoke(seed: int = 17) -> dict[str, object]:
+def run_integration_smoke(seed: int = DEFAULT_DIAGNOSTIC_SEED) -> dict[str, object]:
     """Run a small in-process smoke check across Phase 6-15 modules.
 
     Example:
@@ -67,8 +72,11 @@ def run_integration_smoke(seed: int = 17) -> dict[str, object]:
     """
     returns = regime_switching_volatility(64, seed)
     mfdfa = run_mfdfa(returns)
-    risk = compute_asset_multifractal_risk(returns, {"delta_alpha": 0.2})
-    regimes = detect_multifractal_regimes(_regime_rows(returns))
+    risk = compute_asset_multifractal_risk(
+        returns,
+        {"delta_alpha": REPORT_RISK_DELTA_ALPHA},
+    )
+    regimes = detect_multifractal_regimes(build_regime_feature_rows(returns))
     portfolio = optimize_multifractal_adjusted_portfolio(["SYNTH"], [[0.02]], {})
     lob = analyze_lob_multifractality(synthetic_lob_snapshots(48, seed))
     return {
@@ -92,17 +100,3 @@ def quality_gate_payload() -> dict[str, object]:
 
 def _python(arguments: str) -> str:
     return f".\\.venv-win\\Scripts\\python.exe {arguments}"
-
-
-def _regime_rows(series: list[float]) -> list[dict[str, float]]:
-    return [
-        {
-            "hurst_h2": 0.5,
-            "delta_alpha": abs(value),
-            "spectrum_asymmetry": value,
-            "tau_nonlinearity": abs(value),
-            "realized_volatility": abs(value),
-            "drawdown": min(0.0, value),
-        }
-        for value in series
-    ]

@@ -7,6 +7,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Protocol
 
+from quant4.services.multifractal.defaults import DEFAULT_MODEL_RANDOM_SEED
 from quant4.services.multifractal.ml.datasets import (
     SupervisedMultifractalRow,
     dataset_matrix,
@@ -122,14 +123,17 @@ def _sklearn_estimator(model_name: str) -> SklearnClassifier:
     if model_name == "logistic_regression":
         from sklearn.linear_model import LogisticRegression
 
-        return LogisticRegression(max_iter=200, random_state=17)
+        return LogisticRegression(max_iter=200, random_state=DEFAULT_MODEL_RANDOM_SEED)
     if model_name == "random_forest":
         from sklearn.ensemble import RandomForestClassifier
 
-        return RandomForestClassifier(n_estimators=50, random_state=17)
+        return RandomForestClassifier(
+            n_estimators=50,
+            random_state=DEFAULT_MODEL_RANDOM_SEED,
+        )
     from sklearn.ensemble import GradientBoostingClassifier
 
-    return GradientBoostingClassifier(random_state=17)
+    return GradientBoostingClassifier(random_state=DEFAULT_MODEL_RANDOM_SEED)
 
 
 def _matrix_for_columns(

@@ -5,6 +5,10 @@ from __future__ import annotations
 from django.core.management.base import BaseCommand, CommandParser
 
 from quant4.services.multifractal.cli_support import json_text, parse_float_series
+from quant4.services.multifractal.defaults import (
+    REPORT_RISK_DELTA_ALPHA,
+    REPORT_RISK_INTERMITTENCY,
+)
 from quant4.services.multifractal.risk.multifractal_risk import (
     compute_asset_multifractal_risk,
 )
@@ -18,8 +22,16 @@ class Command(BaseCommand):
     def add_arguments(self, parser: CommandParser) -> None:
         """Register risk command options."""
         parser.add_argument("--series", required=True)
-        parser.add_argument("--delta-alpha", type=float, default=0.2)
-        parser.add_argument("--intermittency", type=float, default=0.2)
+        parser.add_argument(
+            "--delta-alpha",
+            type=float,
+            default=REPORT_RISK_DELTA_ALPHA,
+        )
+        parser.add_argument(
+            "--intermittency",
+            type=float,
+            default=REPORT_RISK_INTERMITTENCY,
+        )
 
     def handle(self, *args: object, **options: object) -> None:
         """Compute and print risk payload."""

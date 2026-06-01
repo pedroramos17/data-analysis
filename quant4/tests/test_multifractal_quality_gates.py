@@ -69,3 +69,19 @@ class Quant4MultifractalQualityGateTests(SimpleTestCase):
         self.assertTrue(result["portfolio_ok"])
         self.assertTrue(result["lob_ok"])
         self.assertFalse(result["claims_predictive_performance"])
+
+    def test_shared_defaults_and_regime_helper_are_used_by_modules(self) -> None:
+        """Reports and quality gates expose the shared defaults/helper boundary."""
+        import quant4.services.multifractal.quality_gates as quality_gates
+        import quant4.services.multifractal.reports.multifractal_report as reports
+        from quant4.services.multifractal.defaults import DEFAULT_DIAGNOSTIC_SEED
+        from quant4.services.multifractal.regime.features import (
+            build_regime_feature_rows,
+        )
+
+        self.assertEqual(DEFAULT_DIAGNOSTIC_SEED, 17)
+        self.assertIs(reports.build_regime_feature_rows, build_regime_feature_rows)
+        self.assertIs(
+            quality_gates.build_regime_feature_rows,
+            build_regime_feature_rows,
+        )

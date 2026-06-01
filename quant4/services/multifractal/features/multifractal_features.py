@@ -11,6 +11,11 @@ from quant4.services.multifractal.core.diagnostics import run_multifractal_diagn
 from quant4.services.multifractal.core.mfdcca import run_mfdcca
 from quant4.services.multifractal.core.mfdfa import run_mfdfa
 from quant4.services.multifractal.core.types import MFDFAConfig
+from quant4.services.multifractal.defaults import (
+    DEFAULT_DIAGNOSTIC_SEED,
+    DIAGNOSTIC_BOOTSTRAP_COUNT,
+    DIAGNOSTIC_FINITE_SIZE_SIMULATIONS,
+)
 
 FeatureValue = str | int | float | bool | dict[str, float] | dict[str, object]
 
@@ -30,9 +35,9 @@ def compute_multifractal_feature_row(
     diagnostics = run_multifractal_diagnostics(
         series,
         config,
-        seed=17,
-        bootstrap_count=4,
-        finite_size_simulations=2,
+        seed=DEFAULT_DIAGNOSTIC_SEED,
+        bootstrap_count=DIAGNOSTIC_BOOTSTRAP_COUNT,
+        finite_size_simulations=DIAGNOSTIC_FINITE_SIZE_SIMULATIONS,
     )
     return {
         "symbol": symbol,
