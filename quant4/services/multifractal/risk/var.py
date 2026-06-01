@@ -21,14 +21,14 @@ def expected_shortfall(
     returns: Sequence[float],
     confidence_level: float = 0.95,
 ) -> float:
-    """Return historical expected shortfall beyond VaR.
+    """Return non-negative historical expected shortfall beyond VaR.
 
     Example:
         `value = expected_shortfall([-0.01, -0.05, 0.02], 0.95)`
     """
     losses = _losses(returns)
     threshold = historical_var(returns, confidence_level)
-    tail = [loss for loss in losses if loss >= threshold]
+    tail = _tail_losses(losses, threshold)
     return sum(tail) / len(tail) if tail else threshold
 
 
@@ -69,7 +69,13 @@ def _ewma_variance(values: Sequence[float], decay: float) -> float:
 
 
 def _losses(returns: Sequence[float]) -> list[float]:
-    return [-value for value in _finite_returns(returns)]
+    return [max(0.0, -value) for value in _finite_returns(returns)]
+
+
+def _tail_losses(losses: Sequence[float], threshold: float) -> list[float]:
+    if threshold <= 0.0:
+        return [loss for loss in losses if loss > 0.0]
+    return [loss for loss in losses if loss >= threshold]
 
 
 def _finite_returns(returns: Sequence[float]) -> list[float]:

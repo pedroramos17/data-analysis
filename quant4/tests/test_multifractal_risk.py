@@ -21,6 +21,26 @@ class Quant4MultifractalRiskTests(SimpleTestCase):
             historical_var(returns, 0.80),
         )
 
+    def test_var_and_expected_shortfall_are_zero_without_losses(self) -> None:
+        """All-positive samples have zero historical loss VaR and ES."""
+        from quant4.services.multifractal.risk.var import (
+            expected_shortfall,
+            historical_var,
+        )
+
+        returns = [0.01, 0.02, 0.03, 0.04]
+
+        self.assertEqual(historical_var(returns, 0.95), 0.0)
+        self.assertEqual(expected_shortfall(returns, 0.95), 0.0)
+
+    def test_expected_shortfall_averages_losses_beyond_var(self) -> None:
+        """Expected shortfall averages the historical tail losses."""
+        from quant4.services.multifractal.risk.var import expected_shortfall
+
+        returns = [-0.01, -0.02, -0.10, 0.03]
+
+        self.assertGreaterEqual(expected_shortfall(returns, 0.80), 0.10)
+
     def test_risk_score_increases_with_volatility_and_intermittency(self) -> None:
         """Multifractal risk score responds to volatility and intermittency."""
         from quant4.services.multifractal.risk.multifractal_risk import (
