@@ -1,0 +1,128 @@
+{% extends "monitoring/base.html" %}
+
+{% block title %}Quant Systems Cookbook{% endblock %}
+
+{% block content %}
+<style>
+  .cookbook-layout {
+    display: grid;
+    gap: 18px;
+  }
+  .cookbook-section {
+    display: grid;
+    gap: 12px;
+  }
+  .cookbook-command {
+    margin: 0 0 10px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .cookbook-columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px;
+  }
+  .cookbook-note-list {
+    margin-top: 8px;
+  }
+</style>
+
+<section class="cookbook-layout" aria-labelledby="cookbook-heading">
+  <div>
+    <h1 id="cookbook-heading">Quant Systems Cookbook</h1>
+    <p class="muted">
+      Local-first runbook for the QuantSpace, Quant4, MarketLab, graph,
+      risk, portfolio, LOB, full-experiment, and multifractal research systems.
+      This page is read-only and does not execute commands.
+    </p>
+  </div>
+
+  <section class="panel" aria-labelledby="safety-heading">
+    <h2 id="safety-heading">Safety Boundaries</h2>
+    {% for boundary in safety_boundaries %}
+      <span class="pill">{{ boundary }}</span>
+    {% endfor %}
+  </section>
+
+  <section class="panel" aria-labelledby="validation-heading">
+    <h2 id="validation-heading">Global Validation</h2>
+    <p class="muted">
+      Covers ruff check quant4, manage.py check, makemigrations --check --dry-run,
+      manage.py test quant4, and manage.py test.
+    </p>
+    {% for command in validation_commands %}
+      <pre class="cookbook-command"><code>{{ command }}</code></pre>
+    {% endfor %}
+  </section>
+
+  {% for section in cookbook_sections %}
+    <article class="panel cookbook-section" aria-labelledby="cookbook-section-{{ forloop.counter }}">
+      <div>
+        <h2 id="cookbook-section-{{ forloop.counter }}">{{ section.name }}</h2>
+        <p class="muted">{{ section.purpose }}</p>
+      </div>
+
+      {% if section.routes %}
+        <div>
+          <h3>Routes</h3>
+          {% for route in section.routes %}
+            <span class="pill">{{ route }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="cookbook-columns">
+        <div>
+          <h3>Run</h3>
+          {% for command in section.run_commands %}
+            <pre class="cookbook-command"><code>{{ command }}</code></pre>
+          {% empty %}
+            <p class="muted">No command path; use the listed route.</p>
+          {% endfor %}
+        </div>
+        <div>
+          <h3>Test</h3>
+          {% for command in section.test_commands %}
+            <pre class="cookbook-command"><code>{{ command }}</code></pre>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="cookbook-columns">
+        <div>
+          <h3>Expected Output</h3>
+          <p>{{ section.expected_output }}</p>
+        </div>
+        <div>
+          <h3>Artifacts</h3>
+          <ul class="cookbook-note-list">
+            {% for artifact in section.artifacts %}
+              <li>{{ artifact }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        <div>
+          <h3>Optional Dependencies</h3>
+          <p>{{ section.optional_dependency_behavior }}</p>
+        </div>
+      </div>
+    </article>
+  {% endfor %}
+
+  <section class="panel" aria-labelledby="next-improvements-heading">
+    <h2 id="next-improvements-heading">Next Improvements Required</h2>
+    <div class="cookbook-columns">
+      {% for group in next_improvement_groups %}
+        <div>
+          <h3>{{ group.title }}</h3>
+          <ul class="cookbook-note-list">
+            {% for item in group.items %}
+              <li><strong>{{ item.priority }}</strong> {{ item.title }}. {{ item.rationale }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+</section>
+{% endblock %}

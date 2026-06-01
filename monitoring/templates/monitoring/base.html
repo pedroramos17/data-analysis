@@ -244,7 +244,7 @@
         left: 10px;
         z-index: 30;
         display: grid;
-        grid-template-columns: repeat(5, 1fr);
+        grid-template-columns: repeat(6, 1fr);
         gap: 4px;
         padding: 8px;
         border: 1px solid var(--border);
@@ -275,6 +275,7 @@
     <nav class="top-nav" aria-label="Primary navigation">
       <strong><a href="{% url 'monitoring:dashboard' %}">Public Source Monitor</a></strong>
       <a href="{% url 'monitoring:document-list' %}">Documents</a>
+      <a href="{% url 'monitoring:research-cookbook' %}">Cookbook</a>
       <a href="{% url 'monitoring:feed-digest' %}">Digest</a>
       <a href="{% url 'monitoring:alert-hit-list' %}">Alerts</a>
       <a href="{% url 'monitoring:topic-cluster-list' %}">Topics</a>
@@ -304,6 +305,7 @@
   </main>
   <nav class="mobile-bottom-nav" aria-label="Mobile primary navigation">
     <a href="{% url 'monitoring:dashboard' %}">Home</a>
+    <a href="{% url 'monitoring:research-cookbook' %}">Cookbook</a>
     <a href="{% url 'monitoring:feed-digest' %}">Digest</a>
     <a href="{% url 'monitoring:alert-hit-list' %}">Alerts</a>
     <a href="{% url 'monitoring:topic-cluster-list' %}">Topics</a>

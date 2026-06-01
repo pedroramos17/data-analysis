@@ -2,12 +2,17 @@
 
 from django.urls import path
 
-from monitoring import alert_views, candidate_views, export_views, views
+from monitoring import alert_views, candidate_views, cookbook_views, export_views, views
 
 app_name = "monitoring"
 
 urlpatterns = [
     path("", views.DashboardView.as_view(), name="dashboard"),
+    path(
+        "cookbook/",
+        cookbook_views.ResearchCookbookView.as_view(),
+        name="research-cookbook",
+    ),
     path("documents/", views.DocumentListView.as_view(), name="document-list"),
     path("alerts/", views.AlertHitListView.as_view(), name="alert-hit-list"),
     path(
