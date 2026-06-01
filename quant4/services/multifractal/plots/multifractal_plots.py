@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from collections.abc import Callable
 from pathlib import Path
 
@@ -38,6 +39,24 @@ def write_multifractal_plots(
     ]
 
 
+def fluctuation_plot_points(
+    result: MFDFAResult,
+    q_label: str = "2",
+) -> list[tuple[float, float]]:
+    """Return log-log fluctuation coordinates for one q label.
+
+    Example:
+        `points = fluctuation_plot_points(result, "2")`
+    """
+    if q_label not in result.fluctuation_functions:
+        expected = tuple(result.fluctuation_functions)
+        raise ValueError(f"Invalid q_label {q_label!r}; expected one of {expected!r}")
+    return [
+        (math.log(scale), math.log(_positive_fluctuation(value, result)))
+        for scale, value in result.fluctuation_functions[q_label]
+    ]
+
+
 def _write_plot(
     output_dir: Path,
     prefix: str,
@@ -57,11 +76,14 @@ def _write_placeholder(output_dir: Path, prefix: str) -> str:
 
 def _plot_fluctuation(result: MFDFAResult, pyplot: object, path: Path) -> None:
     figure = pyplot.figure()
-    for label, points in result.fluctuation_functions.items():
+    for label in result.fluctuation_functions:
         if label in {"-2", "0", "2"}:
+            points = fluctuation_plot_points(result, label)
             pyplot.plot([x for x, _y in points], [y for _x, y in points], label=label)
     pyplot.legend()
     pyplot.title("MF-DFA fluctuation functions")
+    pyplot.xlabel("log(scale)")
+    pyplot.ylabel("log(Fq)")
     _save_and_close(figure, pyplot, path)
 
 
@@ -91,3 +113,7 @@ def _plot_spectrum(result: MFDFAResult, pyplot: object, path: Path) -> None:
 def _save_and_close(figure: object, pyplot: object, path: Path) -> None:
     figure.savefig(path, bbox_inches="tight")
     pyplot.close(figure)
+
+
+def _positive_fluctuation(value: float, result: MFDFAResult) -> float:
+    return max(float(value), result.config.epsilon)

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -52,6 +53,20 @@ class Quant4MultifractalReportingTests(SimpleTestCase):
 
         self.assertGreaterEqual(len(paths), 1)
         self.assertTrue(all(Path(path).name.startswith("mf_") for path in paths))
+
+    def test_fluctuation_plot_points_are_log_scaled(self) -> None:
+        """MF-DFA fluctuation plot points expose log-log coordinates."""
+        from quant4.services.multifractal.core.mfdfa import run_mfdfa
+        from quant4.services.multifractal.plots.multifractal_plots import (
+            fluctuation_plot_points,
+        )
+
+        result = run_mfdfa(_series())
+        first_scale, first_value = result.fluctuation_functions["2"][0]
+        first_x, first_y = fluctuation_plot_points(result, "2")[0]
+
+        self.assertAlmostEqual(first_x, math.log(first_scale))
+        self.assertAlmostEqual(first_y, math.log(first_value))
 
 
 def _series() -> list[float]:

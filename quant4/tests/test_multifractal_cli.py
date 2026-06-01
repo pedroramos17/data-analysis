@@ -51,6 +51,34 @@ class Quant4MultifractalCLITests(SimpleTestCase):
 
         self.assertIn('"method": "mfdfa"', output.getvalue())
 
+    def test_diagnostics_features_and_regime_commands_smoke(self) -> None:
+        """Diagnostics, feature, and regime commands print local JSON payloads."""
+        diagnostics_out = StringIO()
+        features_out = StringIO()
+        regime_out = StringIO()
+
+        call_command(
+            "quant4_mf_diagnostics",
+            "--series",
+            _series(),
+            stdout=diagnostics_out,
+        )
+        call_command(
+            "quant4_mf_features",
+            "--series",
+            _series(),
+            "--symbol",
+            "SPY",
+            "--window-id",
+            "w0",
+            stdout=features_out,
+        )
+        call_command("quant4_mf_regime", "--series", _series(), stdout=regime_out)
+
+        self.assertIn('"attribution"', diagnostics_out.getvalue())
+        self.assertIn('"config_hash"', features_out.getvalue())
+        self.assertIn('"labels"', regime_out.getvalue())
+
     def test_risk_portfolio_and_report_commands_smoke(self) -> None:
         """Risk, portfolio, and report commands expose honest local outputs."""
         risk_out = StringIO()
