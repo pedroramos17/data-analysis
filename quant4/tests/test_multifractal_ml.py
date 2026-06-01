@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import builtins
+from unittest.mock import patch
+
 from django.test import SimpleTestCase
 
 
@@ -43,6 +46,38 @@ class Quant4MultifractalMLTests(SimpleTestCase):
         self.assertEqual(len(report.predictions), len(dataset[4:]))
         self.assertEqual(report.metadata["dependency"], "local_fallback")
 
+    def test_optional_sklearn_model_fails_clearly_when_missing(self) -> None:
+        """Optional sklearn models must not silently become majority fallback."""
+        from quant4.services.multifractal.ml.baselines import fit_baseline_classifier
+        from quant4.services.multifractal.ml.datasets import build_supervised_dataset
+
+        dataset = build_supervised_dataset(_features(8), [0.0, 0.1, 0.2, -0.1] * 2)
+
+        missing_dependency = "logistic_regression.*scikit-learn"
+        with patch.object(builtins, "__import__", side_effect=_missing_sklearn_import):
+            with self.assertRaisesRegex(RuntimeError, missing_dependency):
+                fit_baseline_classifier(
+                    dataset[:4],
+                    dataset[4:],
+                    "next_return_sign",
+                    model_name="logistic_regression",
+                )
+
+    def test_invalid_baseline_model_name_fails_clearly(self) -> None:
+        """Unsupported model names enumerate the accepted local baselines."""
+        from quant4.services.multifractal.ml.baselines import fit_baseline_classifier
+        from quant4.services.multifractal.ml.datasets import build_supervised_dataset
+
+        dataset = build_supervised_dataset(_features(8), [0.0, 0.1, 0.2, -0.1] * 2)
+
+        with self.assertRaisesRegex(ValueError, "unknown_model.*majority"):
+            fit_baseline_classifier(
+                dataset[:4],
+                dataset[4:],
+                "next_return_sign",
+                model_name="unknown_model",
+            )
+
     def test_walk_forward_evaluation_does_not_claim_performance(self) -> None:
         """Evaluation metrics are reported without predictive claims."""
         from quant4.services.multifractal.ml.datasets import build_supervised_dataset
@@ -68,3 +103,18 @@ def _features(length: int) -> list[dict[str, float]]:
         }
         for index in range(length)
     ]
+
+
+def _missing_sklearn_import(
+    name: str,
+    globals_: object | None = None,
+    locals_: object | None = None,
+    fromlist: tuple[str, ...] = (),
+    level: int = 0,
+) -> object:
+    if name.startswith("sklearn"):
+        raise ImportError("missing sklearn")
+    return _ORIGINAL_IMPORT(name, globals_, locals_, fromlist, level)
+
+
+_ORIGINAL_IMPORT = builtins.__import__
