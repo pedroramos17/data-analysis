@@ -4,7 +4,7 @@ import re
 from html import unescape
 from html.parser import HTMLParser
 from collections.abc import Iterable
-from typing import override
+from typing_extensions import override
 from xml.etree import ElementTree
 
 from monitoring.contracts import ParsedRecord

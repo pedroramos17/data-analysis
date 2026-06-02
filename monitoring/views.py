@@ -10,6 +10,7 @@ from django.shortcuts import redirect
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView, TemplateView
 
+from monitoring.catalog_sync import ensure_catalogs_synced_if_enabled
 from monitoring.dashboard_actions import (
     DashboardActionResult,
     run_cluster_topics_action,
@@ -17,10 +18,14 @@ from monitoring.dashboard_actions import (
     run_enrich_documents_action,
     run_evaluate_alerts_action,
     run_export_parquet_action,
+    run_ingest_sources_auto_run_action,
+    run_ingest_sources_once_action,
     run_nlp_pipeline_action,
     run_score_reputation_action,
+    run_sync_catalogs_action,
 )
 from monitoring.dashboard_predictions import list_recent_high_risk_predictions
+from monitoring.dashboard_table_data import exports_table, metrics_table
 from monitoring.digests import list_feed_digest_payload
 from monitoring.exporters import read_parquet_preview
 from monitoring.models import (
@@ -52,6 +57,7 @@ class DashboardView(TemplateView):
         Example:
             Django calls this while rendering the dashboard.
         """
+        ensure_catalogs_synced_if_enabled()
         context = super().get_context_data(**kwargs)
         context["stats"] = _dashboard_stats()
         nlp_result = self.request.session.get("latest_nlp_result")
@@ -60,6 +66,12 @@ class DashboardView(TemplateView):
         context["recent_metrics"] = NlpRunMetric.objects.all()[:5]
         context["recent_exports"] = ExportArtifact.objects.all()[:5]
         context["recent_high_risk_predictions"] = list_recent_high_risk_predictions()
+        recent_metrics = NlpRunMetric.objects.all()[:5]
+        recent_exports = ExportArtifact.objects.all()[:5]
+        context["recent_metrics"] = recent_metrics
+        context["recent_exports"] = recent_exports
+        context["recent_metrics_table"] = metrics_table(recent_metrics)
+        context["recent_exports_table"] = exports_table(recent_exports)
         return context
 
 
@@ -193,7 +205,7 @@ class AlertHitListView(ListView):
 
 
 class TopicClusterListView(ListView):
-    """List rolling topic clusters.
+    """List active parent topic clusters.
 
     Example:
         Visit `/topics/`.
@@ -203,6 +215,41 @@ class TopicClusterListView(ListView):
     paginate_by = 50
     template_name = "monitoring/topic_cluster_list.html"
     context_object_name = "topic_clusters"
+
+    def get_queryset(self) -> QuerySet[TopicCluster]:
+        """Return active parent topics for the topic overview.
+
+        Example:
+            Django calls this while rendering `/topics/`.
+        """
+        return self.model.objects.filter(
+            status=TopicCluster.Status.ACTIVE,
+            merged_into__isnull=True,
+        ).prefetch_related("slices")
+
+
+class TopicClusterDetailView(DetailView):
+    """Show a parent topic timeline with deterministic slices.
+
+    Example:
+        Visit `/topics/1/`.
+    """
+
+    model = TopicCluster
+    template_name = "monitoring/topic_cluster_detail.html"
+    context_object_name = "topic_cluster"
+
+    def get_context_data(self, **kwargs: object) -> dict[str, object]:
+        """Add slices and slice-document links to the detail page.
+
+        Example:
+            Templates iterate `topic_slices`.
+        """
+        context = super().get_context_data(**kwargs)
+        context["topic_slices"] = self.object.slices.prefetch_related(
+            "document_links__document"
+        )
+        return context
 
 
 class ExportArtifactListView(ListView):
@@ -295,6 +342,39 @@ def discover_sources_action(request: HttpRequest) -> HttpResponseRedirect:
 
 
 @require_POST
+def ingest_sources_run_once_action(request: HttpRequest) -> HttpResponseRedirect:
+    """Ingest due enabled sources once from the dashboard.
+
+    Example:
+        `POST /actions/ingest-sources-run-once/`
+    """
+    result = run_ingest_sources_once_action(limit=_post_int(request, "limit", 20))
+    return _action_redirect(request, result)
+
+
+@require_POST
+def ingest_sources_auto_run_action(request: HttpRequest) -> HttpResponseRedirect:
+    """Queue due source ingestion for the local dashboard worker.
+
+    Example:
+        `POST /actions/ingest-sources-auto-run/`
+    """
+    result = run_ingest_sources_auto_run_action(limit=_post_int(request, "limit", 20))
+    return _action_redirect(request, result)
+
+
+@require_POST
+def sync_catalogs_action(request: HttpRequest) -> HttpResponseRedirect:
+    """Synchronize JSON catalogs into source rows from the dashboard.
+
+    Example:
+        `POST /actions/sync-catalogs/`
+    """
+    result = run_sync_catalogs_action(dry_run=bool(request.POST.get("dry_run")))
+    return _action_redirect(request, result)
+
+
+@require_POST
 def evaluate_alerts_action(request: HttpRequest) -> HttpResponseRedirect:
     """Evaluate alert rules and return to the dashboard.
 
@@ -317,6 +397,7 @@ def cluster_topics_action(request: HttpRequest) -> HttpResponseRedirect:
     result = run_cluster_topics_action(
         window_hours=_post_int(request, "window_hours", 72),
         min_documents=_post_int(request, "min_documents", 3),
+        slice_hours=_post_int(request, "slice_hours", 24),
     )
     return _action_redirect(request, result)
 
@@ -418,7 +499,10 @@ def _dashboard_stats() -> dict[str, int]:
         "enabled_sources": Source.objects.filter(is_enabled=True).count(),
         "documents": NormalizedDocument.objects.count(),
         "open_alerts": AlertHit.objects.filter(status=AlertHit.Status.OPEN).count(),
-        "topic_clusters": TopicCluster.objects.count(),
+        "topic_clusters": TopicCluster.objects.filter(
+            status=TopicCluster.Status.ACTIVE,
+            merged_into__isnull=True,
+        ).count(),
         "pending_candidates": DiscoveryCandidate.objects.filter(
             status="pending"
         ).count(),

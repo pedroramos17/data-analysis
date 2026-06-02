@@ -1,0 +1,43 @@
+{% extends "monitoring/base.html" %}
+{% load dashboard_tables %}
+
+{% block title %}Compute Control Dashboard{% endblock %}
+
+{% block content %}
+<h1>Compute Control Dashboard</h1>
+<p class="muted">Manage local workers, safe jobs, cloud manifests, and budget approvals.</p>
+
+<section class="grid">
+  <div class="panel"><div class="stat">{{ job_counts.running|default:0 }}</div><div class="muted">Running jobs</div></div>
+  <div class="panel"><div class="stat">{{ job_counts.queued|default:0 }}</div><div class="muted">Queued jobs</div></div>
+  <div class="panel"><div class="stat">{{ job_counts.failed|default:0 }}</div><div class="muted">Failed jobs</div></div>
+  <div class="panel"><div class="stat">{{ job_counts.waiting_approval|default:0 }}</div><div class="muted">Waiting approval</div></div>
+</section>
+
+<section class="panel">
+  <h2>Actions</h2>
+  <div class="actions">
+    <a class="pill" href="{% url 'monitoring:control-pipeline-plan' %}">Plan pipeline</a>
+    <a class="pill" href="{% url 'monitoring:control-resources' %}">Resources</a>
+    <a class="pill" href="{% url 'monitoring:control-cloud-budget' %}">Cloud budget</a>
+    <a class="pill" href="{% url 'monitoring:control-workers' %}">Workers</a>
+  </div>
+</section>
+
+<section class="grid">
+  <div class="panel">
+    <h2>Recent Jobs</h2>
+    {% dashboard_table recent_jobs_table %}
+  </div>
+  <div class="panel">
+    <h2>Latest Artifacts</h2>
+    {% dashboard_table latest_artifacts_table %}
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Cloud Budget</h2>
+  <p class="muted">Cloud jobs require a budget policy and approval.</p>
+  {% dashboard_table budget_summaries_table %}
+</section>
+{% endblock %}

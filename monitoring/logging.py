@@ -3,7 +3,7 @@
 import json
 import logging
 from datetime import date, datetime
-from typing import override
+from typing_extensions import override
 
 
 class JsonLineFormatter(logging.Formatter):

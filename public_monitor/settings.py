@@ -1,5 +1,6 @@
 """Django settings for public source monitoring."""
 
+import os
 from pathlib import Path
 
 from public_monitor.remote_mobile import (
@@ -24,6 +25,27 @@ DEV_CSRF_TRUSTED_ORIGINS = REMOTE_MOBILE_SETTINGS.csrf_trusted_origins
 DEV_TUNNEL_PROVIDER = REMOTE_MOBILE_SETTINGS.provider
 DEV_TUNNEL_NOTES = REMOTE_MOBILE_SETTINGS.notes
 warn_remote_mobile_testing(REMOTE_MOBILE_SETTINGS)
+
+def _env_bool(name: str, default: bool) -> bool:
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _env_list(name: str, default: list[str]) -> list[str]:
+    value = os.environ.get(name, "")
+    if not value.strip():
+        return default
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-only-public-source-monitor")
+DEBUG = _env_bool("DJANGO_DEBUG", True)
+ALLOWED_HOSTS: list[str] = _env_list(
+    "DJANGO_ALLOWED_HOSTS",
+    ["localhost", "127.0.0.1", "testserver"],
+)
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -102,6 +124,7 @@ MEDIA_URL = "media/"
 RAW_SNAPSHOT_DIR = MEDIA_ROOT / "raw"
 PARQUET_EXPORT_DIR = BASE_DIR / "exports"
 MONITOR_USER_AGENT = "PublicSourceMonitor/0.1 (+https://example.local/contact)"
+MONITOR_AUTOLOAD_CATALOGS = False
 
 APP_ENV = RUNTIME_SETTINGS.app_env
 DEPLOYMENT_MODE = RUNTIME_SETTINGS.deployment_mode

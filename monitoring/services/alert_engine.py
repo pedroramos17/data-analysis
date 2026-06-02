@@ -64,7 +64,11 @@ def generate_recent_alerts(
         `alerts = generate_recent_alerts(since_hours=24)`
     """
     cutoff = timezone.now() - timedelta(hours=since_hours)
-    clusters = EventCluster.objects.filter(updated_at__gte=cutoff)[:limit]
+    clusters = EventCluster.objects.filter(
+        status=EventCluster.Status.ACTIVE,
+        merged_into__isnull=True,
+        updated_at__gte=cutoff,
+    )[:limit]
     alerts: list[AlertHit] = []
     for cluster in clusters:
         alerts.extend(generate_alerts_for_cluster(cluster.id, dry_run=dry_run))
