@@ -1,0 +1,20 @@
+{% extends "monitoring/base.html" %}
+
+{% block title %}Ask {{ paper.title }}{% endblock %}
+
+{% block content %}
+<h1>Ask {{ paper.title }}</h1>
+<form method="post" class="panel">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Ask</button>
+</form>
+{% if result %}
+  <section class="panel">
+    <h2>Answer</h2>
+    <p>{{ result.answer }}</p>
+    <h3>Prompt Preview</h3>
+    <pre>{{ result.prompt_preview }}</pre>
+  </section>
+{% endif %}
+{% endblock %}

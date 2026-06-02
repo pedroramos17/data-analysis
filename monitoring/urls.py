@@ -2,20 +2,17 @@
 
 from django.urls import include, path
 
-from monitoring import (
-    alert_views,
-    candidate_views,
-    export_views,
-    intelligence_views,
-    views,
-)
+from monitoring import alert_views, candidate_views, cookbook_views, export_views, views
 
 app_name = "monitoring"
 
 urlpatterns = [
     path("", views.DashboardView.as_view(), name="dashboard"),
-    path("dashboard/", include("monitoring.dashboard_control_urls")),
-    path("api/dashboard/", include("monitoring.dashboard_api_urls")),
+    path(
+        "cookbook/",
+        cookbook_views.ResearchCookbookView.as_view(),
+        name="research-cookbook",
+    ),
     path("documents/", views.DocumentListView.as_view(), name="document-list"),
     path("alerts/", views.AlertHitListView.as_view(), name="alert-hit-list"),
     path(

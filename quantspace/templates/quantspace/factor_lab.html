@@ -1,0 +1,32 @@
+{% extends "monitoring/base.html" %}
+
+{% block title %}QuantSpace Factor Lab{% endblock %}
+
+{% block content %}
+<h1>Factor Lab</h1>
+<div class="table-scroll">
+  <table class="responsive-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Paper</th>
+        <th>Status</th>
+        <th>Support</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for factor in factors %}
+        <tr>
+          <td data-label="Name">{{ factor.name }}</td>
+          <td data-label="Paper">{{ factor.paper.title }}</td>
+          <td data-label="Status">{{ factor.status }}</td>
+          <td data-label="Support">{{ factor.support_status }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4" class="muted">No factor candidates generated yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include "monitoring/pagination.html" %}
+{% endblock %}
