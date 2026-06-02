@@ -6,8 +6,10 @@ from public_monitor.remote_mobile import (
     build_remote_mobile_settings,
     warn_remote_mobile_testing,
 )
+from src.config.settings import load_runtime_settings
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+RUNTIME_SETTINGS = load_runtime_settings(base_dir=BASE_DIR)
 
 SECRET_KEY = "dev-only-public-source-monitor"
 DEBUG = True
@@ -65,13 +67,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "public_monitor.wsgi.application"
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-        "OPTIONS": {"timeout": 30},
-    }
-}
+DATABASES = {"default": RUNTIME_SETTINGS.database.as_django_database()}
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -106,6 +102,19 @@ MEDIA_URL = "media/"
 RAW_SNAPSHOT_DIR = MEDIA_ROOT / "raw"
 PARQUET_EXPORT_DIR = BASE_DIR / "exports"
 MONITOR_USER_AGENT = "PublicSourceMonitor/0.1 (+https://example.local/contact)"
+
+APP_ENV = RUNTIME_SETTINGS.app_env
+DEPLOYMENT_MODE = RUNTIME_SETTINGS.deployment_mode
+DB_MODE = RUNTIME_SETTINGS.database.db_mode
+OLAP_MODE = RUNTIME_SETTINGS.duckdb.olap_mode
+STORAGE_PROVIDER = RUNTIME_SETTINGS.storage.provider
+QUEUE_PROVIDER = RUNTIME_SETTINGS.queue.provider
+SECRETS_PROVIDER = RUNTIME_SETTINGS.secrets_provider
+MODEL_PROVIDER = RUNTIME_SETTINGS.model.provider
+COMPUTE_PROVIDER = RUNTIME_SETTINGS.compute.provider
+DATA_LAKE_DIR = RUNTIME_SETTINGS.duckdb.data_lake_root
+DUCKDB_PATH = RUNTIME_SETTINGS.duckdb.database_path
+MODEL_CACHE_DIR = RUNTIME_SETTINGS.model.cache_root
 
 LOGGING = {
     "version": 1,
