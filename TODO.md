@@ -18,7 +18,7 @@ Status: active Phase 0 checklist
 ## Phase 1: Provider Settings And Local Facades
 
 - [x] Add provider-neutral deployment settings with `local` as the default.
-- [ ] Add local fallback interfaces for database, storage, analytics, compute,
+- [x] Add local fallback interfaces for database, storage, analytics, compute,
   queue, secrets, and model registry.
 - [x] Add tests that every provider category resolves locally without optional
   cloud dependencies.
