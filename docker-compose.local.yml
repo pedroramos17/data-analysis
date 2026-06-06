@@ -1,0 +1,85 @@
+services:
+  app:
+    build:
+      context: .
+      args:
+        REQUIREMENTS_FILE: requirements.txt
+    command: python manage.py runserver 0.0.0.0:8000
+    environment:
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-dev-only-public-source-monitor}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-true}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0,app}
+      APP_ENV: ${APP_ENV:-local}
+      DEPLOYMENT_MODE: ${DEPLOYMENT_MODE:-onprem}
+      DB_MODE: ${DB_MODE:-sqlite}
+      SQLITE_PATH: ${SQLITE_PATH:-/app/data/db.sqlite3}
+      DATA_LAKE_ROOT: ${DATA_LAKE_ROOT:-/app/data/lake}
+      DUCKDB_PATH: ${DUCKDB_PATH:-/app/data/lake/analytics.duckdb}
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-local}
+      QUEUE_PROVIDER: ${QUEUE_PROVIDER:-local}
+      ORCHESTRATOR: ${ORCHESTRATOR:-local}
+      RATE_LIMIT_PROVIDER: ${RATE_LIMIT_PROVIDER:-memory}
+      MODEL_DEVICE: ${MODEL_DEVICE:-cpu}
+      COST_MODE: ${COST_MODE:-minimum}
+      MODEL_CACHE_DIR: ${MODEL_CACHE_DIR:-/app/models}
+      COMPUTE_PROVIDER: ${COMPUTE_PROVIDER:-local}
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    volumes:
+      - .:/app
+      - local_data:/app/data
+      - local_media:/app/media
+      - local_exports:/app/exports
+      - local_models:/app/models
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/healthz/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  postgres:
+    image: postgres:16-alpine
+    profiles: ["postgres"]
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-quant}
+      POSTGRES_USER: ${POSTGRES_USER:-quant}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-quant}
+    ports:
+      - "${POSTGRES_PORT:-54329}:5432"
+    volumes:
+      - local_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    profiles: ["minio"]
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - local_minio:/data
+
+  redis:
+    image: redis:7-alpine
+    profiles: ["redis"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - local_redis:/data
+
+volumes:
+  local_data:
+  local_media:
+  local_exports:
+  local_models:
+  local_postgres:
+  local_minio:
+  local_redis:
