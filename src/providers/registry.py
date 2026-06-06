@@ -7,7 +7,9 @@ from dataclasses import dataclass, field
 from src.config.settings import RuntimeSettings
 from src.providers.compute.base import ComputeProvider
 from src.providers.compute.batch_stub import BatchStubComputeProvider
+from src.providers.compute.dry_run import DryRunComputeProvider
 from src.providers.compute.local import LocalComputeProvider
+from src.providers.compute.runpod import RunPodComputeProvider
 from src.providers.database.base import DatabaseProvider
 from src.providers.database.postgres import PostgresDatabaseProvider
 from src.providers.database.sqlite import SqliteDatabaseProvider
@@ -15,9 +17,13 @@ from src.providers.model_registry.base import ModelRegistryProvider
 from src.providers.model_registry.hf_stub import HuggingFaceModelRegistryStub
 from src.providers.model_registry.local import LocalModelRegistryProvider
 from src.providers.model_registry.object_store import ObjectStoreModelRegistryProvider
+from src.providers.provenance import build_provider_provenance
 from src.providers.queue.base import QueueProvider
 from src.providers.queue.local import LocalQueueProvider
 from src.providers.queue.redis import RedisQueueProvider
+from src.providers.rate_limit.base import RateLimitProvider
+from src.providers.rate_limit.memory import MemoryRateLimitProvider
+from src.providers.rate_limit.redis import RedisRateLimitProvider
 from src.providers.secrets.base import SecretProvider
 from src.providers.secrets.env import EnvSecretProvider
 from src.providers.storage.base import StorageProvider
@@ -43,6 +49,7 @@ class ProviderRegistry:
     _secrets: SecretProvider | None = field(default=None, init=False)
     _model_registry: ModelRegistryProvider | None = field(default=None, init=False)
     _compute: ComputeProvider | None = field(default=None, init=False)
+    _rate_limit: RateLimitProvider | None = field(default=None, init=False)
 
     def get_storage(self) -> StorageProvider:
         """Return the configured storage provider."""
@@ -86,6 +93,12 @@ class ProviderRegistry:
             self._compute = _build_compute(self.settings)
         return self._compute
 
+    def get_rate_limit(self) -> RateLimitProvider:
+        """Return the configured rate-limit provider."""
+        if self._rate_limit is None:
+            self._rate_limit = _build_rate_limit(self.settings)
+        return self._rate_limit
+
 
 def build_provider_registry(settings: RuntimeSettings) -> ProviderRegistry:
     """Build a provider registry from runtime settings.
@@ -94,6 +107,13 @@ def build_provider_registry(settings: RuntimeSettings) -> ProviderRegistry:
         `registry = build_provider_registry(load_runtime_settings())`
     """
     return ProviderRegistry(settings)
+
+
+__all__ = [
+    "ProviderRegistry",
+    "build_provider_registry",
+    "build_provider_provenance",
+]
 
 
 def _build_storage(settings: RuntimeSettings) -> StorageProvider:
@@ -128,4 +148,14 @@ def _build_model_registry(
 def _build_compute(settings: RuntimeSettings) -> ComputeProvider:
     if settings.compute.provider == "local":
         return LocalComputeProvider()
+    if settings.compute.provider == "runpod":
+        return RunPodComputeProvider(settings)
+    if settings.compute.provider == "stub":
+        return DryRunComputeProvider()
     return BatchStubComputeProvider(settings.compute.provider)
+
+
+def _build_rate_limit(settings: RuntimeSettings) -> RateLimitProvider:
+    if settings.rate_limit.provider == "memory":
+        return MemoryRateLimitProvider(settings.rate_limit)
+    return RedisRateLimitProvider(settings.rate_limit)
