@@ -1,0 +1,45 @@
+name: pipeline_mvp
+pipeline:
+  name: pipeline_mvp
+  tasks:
+    - ingest_raw
+    - preprocess
+    - extract_features
+    - build_sliding_windows
+    - train_baselines
+    - train_neural_optional
+    - predict
+    - evaluate
+    - backtest
+    - risk_report
+    - aggregate_report
+retries:
+  max_attempts: 2
+  backoff_seconds: 0
+cost_estimate:
+  estimated_cost_usd: 0.0
+  currency: USD
+  provider: local
+efficiency_gates:
+  max_pipeline_minutes_local: 30
+  max_peak_memory_mb: 4096
+  min_rows_per_second: 10000
+  max_gpu_job_minutes: 60
+  max_cost_per_run_usd: 2.00
+mvp_demo:
+  enabled: true
+  run_id: pipeline_mvp
+  symbols:
+    - SPY
+    - QQQ
+  asset_type: equity
+  timeframe: 1d
+  start: "2024-01-01"
+  periods: 30
+  source: sample
+  feature_version: pipeline_mvp_v1
+  model_name: naive_return
+  model_version: pipeline_mvp_v1
+  horizon: 1d
+  optional_sequence_models: []
+  persist_feature_metadata: true

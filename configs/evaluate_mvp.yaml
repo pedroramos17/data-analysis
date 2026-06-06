@@ -1,0 +1,15 @@
+name: evaluate_mvp
+model_name: ridge_return
+model_version: mvp_v1
+dataset_name: spy_rolling
+dataset_version: mvp_v1
+dataset_path: data/lake/datasets
+model_root: data/lake/models
+prediction_root: predictions
+report_root: data/lake/reports/evaluation
+target_column: close
+horizon: 5d
+signal_threshold: 0.0
+require_duckdb: false
+store_metrics: true
+gpu_hourly_cost: 0.0

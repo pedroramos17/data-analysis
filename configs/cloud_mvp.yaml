@@ -1,0 +1,20 @@
+run_id: cloud_mvp_demo
+symbols:
+  - SPY
+  - QQQ
+asset_type: equity
+timeframe: 1d
+start: "2024-01-01"
+periods: 30
+source: sample
+feature_version: mvp_v1
+model_name: naive_return
+model_version: mvp_v1
+horizon: 1d
+optional_sequence_models:
+  - fin_mamba_small
+  - samba_small
+lake_root: data/lake
+duckdb_path: data/lake/analytics.duckdb
+database_url: ""
+persist_feature_metadata: true

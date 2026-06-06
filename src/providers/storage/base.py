@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Protocol
 
 
@@ -11,6 +12,12 @@ class StorageProvider(Protocol):
     Example:
         `storage.put_bytes("x.txt", b"x")`
     """
+
+    def put_file(self, local_path: str | Path, remote_path: str) -> str:
+        """Store a local file and return a provider-neutral URI."""
+
+    def get_file(self, remote_path: str, local_path: str | Path) -> Path:
+        """Download a provider path to a local path."""
 
     def put_bytes(
         self,

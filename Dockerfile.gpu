@@ -1,0 +1,34 @@
+# GPU job image for optional RunPod training. No secrets are copied into the image;
+# pass credentials at runtime via environment variables or a secret provider.
+FROM pytorch/pytorch:2.5.1-cuda12.4-cudnn9-runtime
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    APP_ENV=cloud \
+    DEPLOYMENT_MODE=cloud_gpu \
+    COMPUTE_PROVIDER=runpod \
+    RUNPOD_DRY_RUN=true \
+    MODEL_DEVICE=cuda \
+    DATA_LAKE_ROOT=/workspace/data/lake \
+    MODEL_CACHE_DIR=/workspace/models
+
+WORKDIR /workspace
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates curl tini \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY pyproject.toml README.md ./
+COPY src ./src
+COPY configs ./configs
+COPY infra/runpod/entrypoint_train.sh /usr/local/bin/entrypoint_train.sh
+COPY infra/runpod/entrypoint_infer.sh /usr/local/bin/entrypoint_infer.sh
+
+RUN python -m pip install --upgrade pip \
+    && python -m pip install --no-cache-dir numpy pandas pyarrow duckdb PyYAML boto3 SQLAlchemy \
+    && python -m pip install -e . --no-deps \
+    && mkdir -p /workspace/data/lake /workspace/models /workspace/logs /workspace/artifacts \
+    && chmod 0755 /usr/local/bin/entrypoint_train.sh /usr/local/bin/entrypoint_infer.sh
+
+ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/entrypoint_train.sh"]

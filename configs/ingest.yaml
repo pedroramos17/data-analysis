@@ -1,0 +1,9 @@
+source: sample
+source_type: market
+symbols:
+  - SPY
+asset_type: equity
+timeframe: 1d
+start: "2024-01-01"
+periods: 8
+notes: deterministic local mock OHLCV ingest; no network required

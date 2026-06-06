@@ -1,0 +1,18 @@
+model_name: ridge_return
+model_version: mvp_v1
+dataset_path: data/lake/datasets/dataset=spy_rolling/version=mvp_v1/window_id=0
+target_column: close
+feature_columns:
+  - open
+  - high
+  - low
+  - volume
+output_root: data/lake/models
+training_mode: single
+epochs: 1
+learning_rate: 0.001
+batch_size: 32
+seed: 42
+device: cpu
+require_duckdb: false
+generate_runpod_spec: false

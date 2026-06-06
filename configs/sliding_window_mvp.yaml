@@ -1,0 +1,16 @@
+dataset_name: spy_rolling
+version: mvp_v1
+input_path: data/lake/silver/market_bars
+lake_root: data/lake
+output_root: data/lake/datasets
+require_duckdb: false
+sliding_window:
+  mode: rolling
+  train_size_days: 730
+  validation_size_days: 90
+  test_size_days: 90
+  step_size_days: 30
+  embargo_days: 5
+  horizon_days: 5
+  purge_overlap: true
+  min_samples_per_window: 1000

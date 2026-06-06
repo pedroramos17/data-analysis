@@ -1,0 +1,140 @@
+name: pipeline_local_mvp
+pipeline:
+  name: pipeline_local_mvp
+  tasks:
+    - ingest_raw
+    - preprocess
+    - extract_features
+    - build_sliding_windows
+    - train_baselines
+    - train_neural_optional
+    - predict
+    - evaluate
+    - backtest
+    - risk_report
+    - aggregate_report
+retries:
+  max_attempts: 2
+  backoff_seconds: 0
+cost_estimate:
+  estimated_cost_usd: 0.0
+  currency: USD
+  provider: local
+efficiency_gates:
+  max_pipeline_minutes_local: 30
+  max_peak_memory_mb: 4096
+  min_rows_per_second: 10000
+  max_gpu_job_minutes: 60
+  max_cost_per_run_usd: 2.00
+task_configs:
+  ingest_raw:
+    source: sample
+    source_type: market
+    symbols:
+      - SPY
+      - QQQ
+    asset_type: equity
+    timeframe: 1d
+    start: "2024-01-01"
+    periods: 8
+  preprocess:
+    bronze_path: bronze/market_bars/part-000.parquet
+    silver_path: silver/market_bars/part-000.parquet
+    quality_report_path: silver/market_bars/_quality_report.json
+    calendar_frequency: 1d
+    price_jump_threshold: 0.2
+    stale_periods: 2
+    require_duckdb: false
+  features:
+    version: mvp_v1
+    universe:
+      - SPY
+      - QQQ
+    start: "2024-01-01"
+    end: "2024-01-08"
+    timeframe: 1d
+    rolling_window: 20
+    long_window: 60
+    groups:
+      - price_volume
+      - lob
+      - multifractal
+      - regime
+      - risk
+      - graph
+    require_duckdb: false
+  windows:
+    dataset_name: spy_rolling
+    version: mvp_v1
+    input_path: data/lake/silver/market_bars
+    lake_root: data/lake
+    output_root: data/lake/datasets
+    require_duckdb: false
+    sliding_window:
+      mode: rolling
+      train_size_days: 2
+      validation_size_days: 1
+      test_size_days: 1
+      step_size_days: 1
+      embargo_days: 1
+      horizon_days: 1
+      purge_overlap: true
+      min_samples_per_window: 1
+  train:
+    model_name: ridge_return
+    model_version: mvp_v1
+    dataset_path: data/lake/datasets/dataset=spy_rolling/version=mvp_v1/window_id=0
+    target_column: close
+    feature_columns:
+      - open
+      - high
+      - low
+      - volume
+    output_root: data/lake/models
+    training_mode: single
+    epochs: 1
+    device: cpu
+    require_duckdb: false
+    generate_runpod_spec: false
+  train_neural:
+    enabled: false
+  evaluation:
+    name: evaluate_mvp
+    model_name: ridge_return
+    model_version: mvp_v1
+    dataset_name: spy_rolling
+    dataset_version: mvp_v1
+    dataset_path: data/lake/datasets
+    model_root: data/lake/models
+    prediction_root: predictions
+    report_root: data/lake/reports/evaluation
+    target_column: close
+    horizon: 5d
+    require_duckdb: false
+    store_metrics: true
+  backtest:
+    name: backtest_mvp
+    predictions_path: data/lake/predictions/model=ridge_return/version=mvp_v1/window_id=0/predictions.parquet
+    target_column: close
+    horizon: 5d
+    signal_threshold: 0.0
+    require_duckdb: false
+  risk:
+    enabled: true
+  mvp_demo:
+    enabled: true
+    run_id: pipeline_local_mvp
+    symbols:
+      - SPY
+      - QQQ
+    asset_type: equity
+    timeframe: 1d
+    start: "2024-01-01"
+    periods: 8
+    source: sample
+    feature_version: mvp_v1
+    model_name: naive_return
+    model_version: mvp_v1
+    horizon: 1d
+    optional_sequence_models: []
+    persist_feature_metadata: true

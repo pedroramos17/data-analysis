@@ -1,0 +1,5 @@
+name: smoke-risk
+universe: [SPY]
+risk_model: historical_var
+confidence: 0.95
+sync: false
