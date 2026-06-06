@@ -1,0 +1,6 @@
+name: phase8-backtest
+evaluation_backtest: true
+predictions_path: data/lake/predictions/model=ridge_return/version=phase7_v1/window_id=0/predictions.parquet
+strategy: signal_sign
+signal_threshold: 0.0
+require_duckdb: false

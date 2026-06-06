@@ -1,0 +1,16 @@
+version: phase5_v1
+universe:
+  - SPY
+start: "2020-01-01"
+end: "2030-01-01"
+timeframe: 1d
+rolling_window: 20
+long_window: 60
+groups:
+  - price_volume
+  - lob
+  - multifractal
+  - regime
+  - risk
+  - graph
+require_duckdb: false

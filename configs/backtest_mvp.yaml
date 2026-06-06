@@ -1,0 +1,13 @@
+name: backtest_mvp
+strategy: latest_signal_times_return
+predictions_path: data/lake/predictions/model=ridge_return/version=mvp_v1/window_id=0/predictions.parquet
+target_column: close
+horizon: 5d
+signal_threshold: 0.0
+universe:
+  - SPY
+  - QQQ
+start: "2024-01-01"
+end: "2024-01-30"
+timeframe: 1d
+require_duckdb: false

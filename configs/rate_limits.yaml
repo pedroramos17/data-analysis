@@ -1,0 +1,19 @@
+rate_limits:
+  provider: memory
+  anonymous:
+    requests_per_minute: 20
+  authenticated:
+    requests_per_minute: 120
+  gpu_submit:
+    requests_per_hour: 3
+    requests_per_day: 10
+  ingestion:
+    requests_per_hour: 10
+  training:
+    requests_per_hour: 5
+  features:
+    requests_per_hour: 20
+  predict:
+    requests_per_minute: 60
+  health:
+    requests_per_minute: 600
