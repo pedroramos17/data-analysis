@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "monitoring.apps.MonitoringConfig",
+    "sourceflow.apps.SourceflowConfig",
     "quant4.apps.Quant4Config",
     "quantspace.apps.QuantspaceConfig",
 ]

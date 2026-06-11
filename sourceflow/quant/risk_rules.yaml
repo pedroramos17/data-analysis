@@ -1,0 +1,21 @@
+rules:
+  - id: negative_lawsuit_legal_risk
+    risk_type: legal_risk
+    event_types: [lawsuit]
+    weight: 1.0
+    description: Negative lawsuit events increase direct legal risk.
+  - id: negative_lawsuit_sentiment_risk
+    risk_type: sentiment_risk
+    event_types: [lawsuit]
+    weight: 0.7
+    description: Lawsuit coverage can increase sentiment risk.
+  - id: regulatory_action_risk
+    risk_type: regulatory_risk
+    event_types: [regulatory_action]
+    weight: 1.0
+    description: Regulatory action increases regulatory risk.
+  - id: supply_chain_relation_propagates_risk
+    risk_type: supply_chain_risk
+    edge_types: [supplies_to, customer_of]
+    weight: 0.55
+    description: Supplier and customer relations propagate supply-chain risk.
