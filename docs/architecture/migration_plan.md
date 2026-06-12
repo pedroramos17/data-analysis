@@ -341,7 +341,7 @@ Implementation status:
 
 ### Step 8 - Quant Reasoning, API/UI, Evaluation, Orchestration
 
-Status: Phase 10 quant reasoning implemented; Phases 11 through 15 remain future.
+Status: Phases 10 through 15 implemented (quant reasoning, API/UI, evaluation, orchestration, storage, and final integration). All 15 phases of the plan are complete; the Definition of Done is met.
 
 Actions:
 
@@ -380,6 +380,92 @@ Implementation status:
   rule-based hedge candidates, confidence, and assumptions.
 - Phase 10 tests cover dependency-light quant utilities and Django-backed risk
   propagation, event alpha, regime detection, and portfolio explanations.
+- `sourceflow/api/` exposes Phase 11 Task 11.1 as plain Django JSON views wired
+  into the project URLconf under `/sourceflow/api/`: documents, entities,
+  claims, events, kg/entity/{id}, kg/path, beliefs/{id}/explain, reasoning/run,
+  graphrag/query, source-comparison/event/{id}, quant/risk/{asset_id}, and
+  quant/portfolio/explain. `responses.py` gives every endpoint a typed,
+  logged error envelope (stable HTTP codes + `error.type`); `serializers.py`
+  attaches provenance (source/document/evidence span) to claims, events,
+  beliefs, justifications, and graph edges. The API is CSRF-exempt for
+  programmatic clients.
+- `sourceflow/ui/` provides the Phase 11 Task 11.2 minimal screens under
+  `/sourceflow/` (Django templates in `sourceflow/templates/sourceflow/`):
+  document explorer, entity profile (with its claims/events), claim explorer,
+  event cluster view, source comparison view, knowledge-graph path view, belief
+  explanation view, GraphRAG query screen, risk graph view, and portfolio
+  explanation view.
+- Phase 11 tests (`tests/test_phase11_api.py`) cover every endpoint plus the
+  acceptance screens: JSON responses, provenance on reasoning endpoints, typed
+  errors (404/400/422/405/invalid_json), proof-carrying GraphRAG answers, and
+  PartialCWA source-comparison output.
+- `data/eval/` holds the Phase 12 gold dataset (`gold_documents.jsonl`,
+  `gold_claims.jsonl`, `gold_events.jsonl`, 32 labeled financial/news documents)
+  regenerable via `data/eval/build_gold.py`. The gold set is deliberately
+  discriminating: a few items use verbs outside the heuristic pattern (missed by
+  the extractor) and a few pattern sentences are unlabeled traps, so precision
+  and recall land below 1.0.
+- `sourceflow/evaluation/extraction_eval.py` runs the real extractors over the
+  gold corpus and computes the named metrics: entity/claim/event precision and
+  recall, evidence-span accuracy, and contradiction-detection accuracy. Current
+  scores: entity 0.94/1.00, claim 0.94/0.94, event 0.91/0.91, evidence-span
+  1.00, contradiction-detection 1.00.
+- Phase 12 reasoning tests (`tests/test_phase12_reasoning.py`) assert the seven
+  required behaviors: CWA not applied to news, OWA infers no falsity from missing
+  news, PartialCWA detects omission, contradictions don't crash inference,
+  retraction updates dependent beliefs, risk propagation yields an auditable
+  graph path, and GraphRAG includes supporting and contradicting evidence.
+  `tests/test_phase12_evaluation.py` asserts the metric harness runs and its
+  numbers stay in discriminating bands.
+- `sourceflow/orchestration/` implements the Phase 13 document pipeline: a
+  13-stage registry (`stages.py`: ingest, normalize, chunk, extract_entities,
+  link_entities, extract_claims, extract_events, update_kg, run_reasoning,
+  update_tms, update_retrieval_index, run_quant_signals, generate_reports) over
+  the real sourceflow operations; `policies.py` (RetryPolicy + token-bucket
+  RateLimitPolicy); and `runner.py` (`PipelineRunner`) which creates a job,
+  runs stages in order or one at a time, retries failed stages, and persists
+  per-stage state. Job state lives in the `PipelineJob` and `PipelineStageRun`
+  tables (migration `0003`). Stages are independently runnable, failed stages
+  are retryable, state is visible via `job_state()`, and each stage logs the
+  document id and the model/extractor versions it used.
+- `manage.py run_pipeline` exposes the pipeline on the CLI: start a new job,
+  run/retry a single stage on an existing job, or print a job's visible state.
+- Phase 13 tests (`tests/test_phase13_orchestration.py`) cover full end-to-end
+  runs, per-stage independence and retry, visible state, logged document id +
+  model versions, the CLI, and the rate-limit policy.
+- `sourceflow/storage/` implements the Phase 14 storage strategy. Transactional
+  state stays in the Django ORM (SQLite/Postgres). `snapshot.py` exports curated
+  canonical tables to Parquet (streamed via `.iterator()`) with a manifest whose
+  per-table content hash is over the ordered, type-normalized logical rows, so
+  snapshots are reproducible. `analytics.py` (`SourceflowAnalytics`) runs DuckDB
+  queries over the Parquet snapshot only -- never the transactional DB -- so
+  analytics cannot block ingestion, and columnar scans keep large
+  document/chunk aggregates efficient. `vectors.py` provides a NumPy-backed
+  `LocalVectorStore` (deterministic hashing embedder, reproducible persistence)
+  with optional FAISS/Chroma backends via a factory that raises clearly when the
+  library is absent. `graph_export.py` adds the optional RDF (N-Triples) export
+  over `KnowledgeEdge` and a Neo4j adapter that activates only when the driver is
+  installed; the SQL graph store remains the default.
+- Phase 14 tests (`tests/test_phase14_storage.py`) cover snapshot
+  reproducibility, analytics decoupled from the transactional store, large-table
+  aggregation, vector search + persistence, RDF export, and the optional-backend
+  guards.
+- `sourceflow/orchestration/demo.py` (`run_end_to_end_demo`) is the Phase 15
+  capstone: it composes the Phase 1-14 modules over one scenario -- a cluster of
+  articles about a company facing a regulatory investigation, including a
+  disputing source and an omitting source, a supplier KG relation, and a
+  portfolio position -- and returns a structured report with all ten required
+  outputs (documents ingested, entities linked, claims, event, source
+  comparison, risk belief, supporting+contradicting evidence, risk propagation,
+  GraphRAG answer, portfolio explanation) plus the Definition-of-Done invariants.
+- `manage.py demo_e2e` runs the whole flow from one command (`--summary` for
+  headlines + invariants; default rolls the seeded data back so it is
+  repeatable). The invariants assert every belief has a justification, every
+  conclusion carries evidence, the GraphRAG answer is proof-carrying, the
+  contradiction is preserved rather than collapsed, and every risk path is
+  auditable (graph path + source evidence).
+- Phase 15 tests (`tests/test_phase15_demo.py`) assert all ten outputs, the five
+  Definition-of-Done invariants, and that the demo runs from one command.
 
 ## Current-to-Target Compatibility Rules
 
