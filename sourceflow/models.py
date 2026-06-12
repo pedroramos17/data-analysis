@@ -858,3 +858,71 @@ class PortfolioPosition(TimestampedProvenanceModel):
 
     def __str__(self) -> str:
         return f"{self.portfolio_id}:{self.asset_id}"
+
+
+class PipelineJob(TimestampedProvenanceModel):
+    """A single run of the sourceflow document pipeline, with visible state."""
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        RUNNING = "running", "Running"
+        SUCCEEDED = "succeeded", "Succeeded"
+        FAILED = "failed", "Failed"
+        PARTIAL = "partial", "Partial"
+
+    pipeline_name = models.CharField(max_length=120, default="sourceflow_document_pipeline")
+    document = models.ForeignKey(
+        Document,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="pipeline_jobs",
+    )
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    params_json = models.JSONField(default=dict, blank=True)
+    report_json = models.JSONField(default=dict, blank=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at", "id"]
+        indexes = [
+            models.Index(fields=["status", "created_at"]),
+            models.Index(fields=["pipeline_name", "status"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"job:{self.pk}:{self.pipeline_name}:{self.status}"
+
+
+class PipelineStageRun(TimestampedProvenanceModel):
+    """State for one stage of a pipeline job: status, attempts, and provenance."""
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        RUNNING = "running", "Running"
+        SUCCEEDED = "succeeded", "Succeeded"
+        FAILED = "failed", "Failed"
+        SKIPPED = "skipped", "Skipped"
+
+    job = models.ForeignKey(PipelineJob, on_delete=models.CASCADE, related_name="stage_runs")
+    stage_name = models.CharField(max_length=80)
+    sequence = models.PositiveIntegerField(default=0)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    attempts = models.PositiveIntegerField(default=0)
+    max_attempts = models.PositiveIntegerField(default=1)
+    error = models.TextField(blank=True)
+    output_json = models.JSONField(default=dict, blank=True)
+    model_versions_json = models.JSONField(default=dict, blank=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["job_id", "sequence", "id"]
+        constraints = [
+            models.UniqueConstraint(fields=["job", "stage_name"], name="uniq_sourceflow_pipeline_stage")
+        ]
+        indexes = [models.Index(fields=["job", "status"])]
+
+    def __str__(self) -> str:
+        return f"{self.job_id}:{self.stage_name}:{self.status}"
