@@ -1,0 +1,14 @@
+id: legal_event_increases_risk
+name: Legal event increases litigation risk
+type: default
+when:
+  - event_type: lawsuit
+  - polarity: negative
+then:
+  - belief_type: risk
+    predicate: increases
+    object: litigation_risk
+confidence_delta: 0.2
+exceptions:
+  - event_type: settled_lawsuit
+  - object: immaterial_amount

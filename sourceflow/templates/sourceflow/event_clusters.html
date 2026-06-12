@@ -1,0 +1,27 @@
+{% extends "sourceflow/base.html" %}
+{% block title %}Event clusters{% endblock %}
+{% block content %}
+<h2>Event cluster view</h2>
+{% if clusters %}
+  {% for cluster in clusters %}
+  <div class="card">
+    <strong>{{ cluster.cluster_id }}</strong> <span class="muted">— {{ cluster.key }}</span>
+    <div class="muted">types: {{ cluster.event_types|join:", " }} · {{ cluster.events|length }} event(s) · {{ cluster.claims|length }} claim(s)</div>
+    <table>
+      <tr><th>Event ID</th><th>Type</th><th>Predicate</th><th>Polarity</th><th></th></tr>
+      {% for ev in cluster.events %}
+      <tr>
+        <td>{{ ev.pk }}</td>
+        <td><span class="pill">{{ ev.event_type }}</span></td>
+        <td>{{ ev.predicate }}</td>
+        <td class="{% if ev.polarity == 'negative' %}neg{% elif ev.polarity == 'positive' %}pos{% endif %}">{{ ev.polarity }}</td>
+        <td><a href="{% url 'sourceflow_ui:source-comparison-event' ev.pk %}">compare sources →</a></td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+  {% endfor %}
+{% else %}
+<p class="empty">No events to cluster yet.</p>
+{% endif %}
+{% endblock %}

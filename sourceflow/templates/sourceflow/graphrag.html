@@ -1,0 +1,53 @@
+{% extends "sourceflow/base.html" %}
+{% block title %}GraphRAG{% endblock %}
+{% block content %}
+<h2>GraphRAG query</h2>
+<form class="inline" method="get">
+  <input type="text" name="q" value="{{ q }}" placeholder="ask about an entity, event, or claim" style="width:60%">
+  <button type="submit">Retrieve evidence</button>
+</form>
+{% if pack %}
+  <div class="card muted">
+    confidence {{ pack.confidence }}
+    (retrieval {{ pack.confidence_breakdown.retrieval_confidence }} ·
+     extraction {{ pack.confidence_breakdown.extraction_confidence }} ·
+     reasoning {{ pack.confidence_breakdown.reasoning_confidence }}) ·
+    assumptions: {{ pack.assumptions_used|join:", " }}
+  </div>
+
+  {% if pack.supporting_claims %}
+  <h3>Supporting claims</h3>
+  <ul>{% for item in pack.supporting_claims %}<li>{{ item.text }} <span class="muted">[{{ item.id }}]</span></li>{% endfor %}</ul>
+  {% endif %}
+  {% if pack.contradicting_claims %}
+  <h3>Contradicting claims</h3>
+  <ul>{% for item in pack.contradicting_claims %}<li class="neg">{{ item.text }} <span class="muted">[{{ item.id }}]</span></li>{% endfor %}</ul>
+  {% endif %}
+  {% if pack.events %}
+  <h3>Events</h3>
+  <ul>{% for item in pack.events %}<li>{{ item.text }} <span class="muted">[{{ item.id }}]</span></li>{% endfor %}</ul>
+  {% endif %}
+  {% if pack.text_chunks %}
+  <h3>Text evidence</h3>
+  <ul>{% for item in pack.text_chunks %}<li class="muted">“{{ item.text|slice:":160" }}”</li>{% endfor %}</ul>
+  {% endif %}
+  {% if pack.graph_paths %}
+  <h3>Graph paths</h3>
+  <ul>{% for item in pack.graph_paths %}<li class="muted">{{ item.text }}</li>{% endfor %}</ul>
+  {% endif %}
+
+  <h3>Citations</h3>
+  {% if pack.citations %}
+  <ul>{% for c in pack.citations %}<li class="muted">{{ c }}</li>{% endfor %}</ul>
+  {% else %}<p class="empty">No citations.</p>{% endif %}
+
+  {% if not pack.supporting_claims and not pack.events and not pack.text_chunks and not pack.entities %}
+  <p class="empty">No evidence retrieved — no answer is returned without evidence.</p>
+  {% endif %}
+{% elif q %}
+  <p class="empty">No evidence retrieved for that query.</p>
+{% else %}
+  <p class="muted">Ask a question. Results carry their supporting and contradicting evidence,
+  the assumptions used, and decomposed confidence — never a bare answer.</p>
+{% endif %}
+{% endblock %}

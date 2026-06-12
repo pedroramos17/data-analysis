@@ -6,5 +6,7 @@ from django.urls import include, path
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("quantspace/", include("quantspace.urls")),
+    path("sourceflow/api/", include("sourceflow.api.urls")),
+    path("sourceflow/", include("sourceflow.ui.urls")),
     path("", include("monitoring.urls")),
 ]
