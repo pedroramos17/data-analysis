@@ -1,5 +1,6 @@
 """Sourceflow background-job orchestration boundary."""
 
+from sourceflow.orchestration.demo import run_end_to_end_demo
 from sourceflow.orchestration.policies import RateLimitExceeded, RateLimitPolicy, RetryPolicy
 from sourceflow.orchestration.runner import PipelineRunner, job_state
 from sourceflow.orchestration.stages import (
@@ -21,4 +22,5 @@ __all__ = [
     "RetryPolicy",
     "StageResult",
     "job_state",
+    "run_end_to_end_demo",
 ]
