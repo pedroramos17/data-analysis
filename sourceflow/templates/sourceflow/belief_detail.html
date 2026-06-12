@@ -1,0 +1,53 @@
+{% extends "sourceflow/base.html" %}
+{% block title %}Belief explanation{% endblock %}
+{% block content %}
+{% if not belief %}
+  <h2>Belief not found</h2>
+  <p class="empty">No belief with id {{ belief_id }}.</p>
+{% else %}
+  <h2>Why belief #{{ belief.pk }} exists</h2>
+  <div class="card">
+    <strong>{{ belief.belief_type }}</strong>: {{ belief.subject_entity.canonical_name|default:"" }}
+    <em>{{ belief.predicate }}</em> {{ belief.object_literal }}
+    <div class="muted">
+      truth status <span class="pill">{{ belief.truth_status }}</span> ·
+      confidence {{ belief.confidence }} ·
+      assumption policy <span class="pill">{{ belief.assumption_policy.code }}</span>
+      {% if belief.created_by_rule %}· derived by rule <code>{{ belief.created_by_rule.rule_id }}</code>{% endif %}
+    </div>
+  </div>
+
+  <h3>Supporting evidence ({{ supporting|length }})</h3>
+  {% if supporting %}
+  <table>
+    <tr><th>Support type</th><th>Referent</th><th>Weight</th><th>Active?</th></tr>
+    {% for row in supporting %}
+    <tr>
+      <td><span class="pill">{{ row.justification.support_type }}</span></td>
+      <td>{% if row.justification.supporting_claim_id %}claim #{{ row.justification.supporting_claim_id }}{% elif row.justification.supporting_event_id %}event #{{ row.justification.supporting_event_id }}{% elif row.justification.supporting_belief_id %}belief #{{ row.justification.supporting_belief_id }}{% elif row.justification.rule_id %}rule #{{ row.justification.rule_id }}{% else %}assumption{% endif %}</td>
+      <td>{{ row.justification.weight }}</td>
+      <td class="{% if row.active %}pos{% else %}neg{% endif %}">{{ row.active|yesno:"active,inactive" }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="empty">No supporting justifications.</p>{% endif %}
+
+  <h3>Contradicting evidence ({{ contradicting|length }})</h3>
+  {% if contradicting %}
+  <table>
+    <tr><th>Support type</th><th>Referent</th><th>Weight</th><th>Active?</th></tr>
+    {% for row in contradicting %}
+    <tr>
+      <td><span class="pill">{{ row.justification.support_type }}</span></td>
+      <td>{% if row.justification.supporting_claim_id %}claim #{{ row.justification.supporting_claim_id }}{% elif row.justification.supporting_event_id %}event #{{ row.justification.supporting_event_id }}{% elif row.justification.supporting_belief_id %}belief #{{ row.justification.supporting_belief_id }}{% else %}—{% endif %}</td>
+      <td>{{ row.justification.weight }}</td>
+      <td class="{% if row.active %}pos{% else %}neg{% endif %}">{{ row.active|yesno:"active,inactive" }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  <p class="muted">Contradictions are preserved, not collapsed — the belief stays disputed rather than forcing a single truth value.</p>
+  {% else %}<p class="empty">No contradicting justifications.</p>{% endif %}
+
+  <p><a href="{% url 'sourceflow_ui:beliefs' %}">← all beliefs</a></p>
+{% endif %}
+{% endblock %}

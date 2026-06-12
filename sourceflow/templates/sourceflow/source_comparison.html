@@ -1,0 +1,62 @@
+{% extends "sourceflow/base.html" %}
+{% block title %}Source comparison{% endblock %}
+{% block content %}
+<h2>Source comparison view</h2>
+{% if comparison %}
+  <div class="card muted">
+    cluster <strong>{{ comparison.cluster_id }}</strong> · grouped by {{ comparison.group_by|join:", " }} ·
+    assumption policy <span class="pill">{{ comparison.assumption_policy }}</span>
+    {% if event %}· event #{{ event.pk }} ({{ event.event_type }}){% endif %}
+  </div>
+
+  <h3>Coverage by source group</h3>
+  <table>
+    <tr><th>Group</th><th>Articles</th><th>Claims</th><th>Polarity mix</th><th>Reliability</th></tr>
+    {% for s in comparison.summaries %}
+    <tr>
+      <td>{{ s.group_key }}</td>
+      <td>{{ s.article_count }}</td>
+      <td>{{ s.claim_count }}</td>
+      <td class="muted">{{ s.polarity_counts }}</td>
+      <td>{{ s.reliability_score }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  <h3>Findings</h3>
+  {% if comparison.findings %}
+  <table>
+    <tr><th>Type</th><th>Group</th><th>Description</th><th>Severity</th><th>Policy</th></tr>
+    {% for f in comparison.findings %}
+    <tr>
+      <td><span class="pill">{{ f.detection_type }}</span></td>
+      <td>{{ f.group_key }}</td>
+      <td>{{ f.description }}</td>
+      <td>{{ f.severity }}</td>
+      <td class="muted">{{ f.assumption_policy }}{% if f.inferred_false %} · inferred_false{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  <p class="muted">Omission is reported under PartialCWA — a source <em>omitted</em> a claim, never that the claim is false.</p>
+  {% else %}<p class="empty">No divergence findings for this cluster.</p>{% endif %}
+
+  <p><a href="{% url 'sourceflow_ui:source-comparison' %}">← pick another event</a></p>
+{% else %}
+  {% if missing %}<p class="empty">No event with id {{ missing }}.</p>{% endif %}
+  <p class="muted">Pick an event to compare how different source groups covered its cluster.</p>
+  {% if events %}
+  <table>
+    <tr><th>Event ID</th><th>Type</th><th>Actor</th><th>Predicate</th><th></th></tr>
+    {% for ev in events %}
+    <tr>
+      <td>{{ ev.pk }}</td>
+      <td><span class="pill">{{ ev.event_type }}</span></td>
+      <td>{{ ev.actor_entity.canonical_name|default:ev.actor_entity_id }}</td>
+      <td>{{ ev.predicate }}</td>
+      <td><a href="{% url 'sourceflow_ui:source-comparison-event' ev.pk %}">compare →</a></td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="empty">No events available.</p>{% endif %}
+{% endif %}
+{% endblock %}

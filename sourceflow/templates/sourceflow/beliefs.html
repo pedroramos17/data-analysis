@@ -1,0 +1,24 @@
+{% extends "sourceflow/base.html" %}
+{% block title %}Beliefs{% endblock %}
+{% block content %}
+<h2>Beliefs</h2>
+{% if beliefs %}
+<table>
+  <tr><th>ID</th><th>Type</th><th>Subject</th><th>Predicate</th><th>Truth status</th><th>Conf</th><th>Policy</th><th></th></tr>
+  {% for b in beliefs %}
+  <tr>
+    <td>{{ b.pk }}</td>
+    <td>{{ b.belief_type }}</td>
+    <td>{{ b.subject_entity.canonical_name|default:"—" }}</td>
+    <td>{{ b.predicate }}</td>
+    <td><span class="pill">{{ b.truth_status }}</span></td>
+    <td>{{ b.confidence }}</td>
+    <td class="muted">{{ b.assumption_policy.code }}</td>
+    <td><a href="{% url 'sourceflow_ui:belief-explanation' b.pk %}">explain →</a></td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="empty">No beliefs derived yet. Run reasoning to create some.</p>
+{% endif %}
+{% endblock %}
