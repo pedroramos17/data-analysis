@@ -2,7 +2,14 @@
 
 from django.urls import include, path
 
-from monitoring import alert_views, candidate_views, cookbook_views, export_views, views
+from monitoring import (
+    alert_views,
+    candidate_views,
+    cookbook_views,
+    export_views,
+    intelligence_views,
+    views,
+)
 
 app_name = "monitoring"
 
