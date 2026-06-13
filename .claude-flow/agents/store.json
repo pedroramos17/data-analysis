@@ -1,0 +1,83 @@
+{
+  "agents": {
+    "quant-coordinator": {
+      "agentId": "quant-coordinator",
+      "agentType": "hierarchical-coordinator",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "model": "sonnet"
+      },
+      "createdAt": "2026-06-04T15:10:16.464Z",
+      "model": "sonnet",
+      "modelRoutedBy": "explicit"
+    },
+    "quant-data-engineer": {
+      "agentId": "quant-data-engineer",
+      "agentType": "coder",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "model": "sonnet"
+      },
+      "createdAt": "2026-06-04T15:10:16.518Z",
+      "model": "sonnet",
+      "modelRoutedBy": "explicit"
+    },
+    "quant-model-trainer": {
+      "agentId": "quant-model-trainer",
+      "agentType": "coder",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "model": "sonnet"
+      },
+      "createdAt": "2026-06-04T15:10:16.523Z",
+      "model": "sonnet",
+      "modelRoutedBy": "explicit"
+    },
+    "quant-tester": {
+      "agentId": "quant-tester",
+      "agentType": "tester",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "model": "haiku"
+      },
+      "createdAt": "2026-06-04T15:10:16.527Z",
+      "model": "haiku",
+      "modelRoutedBy": "explicit"
+    },
+    "quant-reviewer": {
+      "agentId": "quant-reviewer",
+      "agentType": "reviewer",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "model": "haiku"
+      },
+      "createdAt": "2026-06-04T15:10:16.535Z",
+      "model": "haiku",
+      "modelRoutedBy": "explicit"
+    },
+    "quant-budget-guard": {
+      "agentId": "quant-budget-guard",
+      "agentType": "planner",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "model": "haiku"
+      },
+      "createdAt": "2026-06-04T15:10:16.538Z",
+      "model": "haiku",
+      "modelRoutedBy": "explicit"
+    }
+  },
+  "version": "3.0.0"
+}

@@ -8,7 +8,7 @@ __pycache__/
 media/raw/
 media/quantspace/
 exports/
-data/graphrag_context/
+data/
 playwright-report/
 runserver.log
 runserver.err
