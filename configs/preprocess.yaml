@@ -1,0 +1,8 @@
+bronze_path: bronze/market_bars/part-000.parquet
+silver_path: silver/market_bars/part-000.parquet
+quality_report_path: silver/market_bars/_quality_report.json
+calendar_frequency: 1d
+price_jump_threshold: 0.2
+stale_periods: 2
+require_duckdb: false
+notes: deterministic raw-to-bronze/silver preprocessing; uses DuckDB when installed

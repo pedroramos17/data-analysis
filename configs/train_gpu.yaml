@@ -1,0 +1,31 @@
+# Secure RunPod planning config. Real submit still requires RUNPOD_DRY_RUN=false,
+# RUNPOD_API_KEY, remote object storage URIs, and --confirm-cost.
+model_name: fin_mamba
+dataset_uri: s3://example-bucket/data/lake/datasets/dataset=spy_rolling/version=phase6_v1
+output_uri: s3://example-bucket/data/lake/models/fin_mamba/runpod
+logs_uri: s3://example-bucket/data/lake/logs/runpod/fin_mamba
+metrics_uri: s3://example-bucket/data/lake/metrics/runpod/fin_mamba
+config_path: configs/train_gpu.yaml
+training_mode: windowed
+target_column: close
+feature_columns:
+  - open
+  - high
+  - low
+  - volume
+epochs: 10
+learning_rate: 0.001
+batch_size: 64
+seed: 42
+device: cuda
+max_runtime_seconds: 3600
+idle_timeout_seconds: 300
+min_gpu_memory_gb: 16
+dataset_size_gb: 1.0
+hourly_cost_usd: 0.75
+runpod_gpu_type: NVIDIA RTX A4000
+runpod_image: ghcr.io/pedroramos17/data-analysis:latest
+command: python3 -m src.cli train run-windowed --config configs/train_gpu.yaml
+require_duckdb: false
+generate_runpod_spec: true
+model_version: phase9_gpu_v1

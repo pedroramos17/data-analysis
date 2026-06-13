@@ -1,0 +1,31 @@
+{
+  "swarms": {
+    "swarm-1780585742912-t6xasi": {
+      "swarmId": "swarm-1780585742912-t6xasi",
+      "topology": "hierarchical",
+      "maxAgents": 6,
+      "status": "running",
+      "agents": [
+        "quant-coordinator",
+        "quant-data-engineer",
+        "quant-model-trainer",
+        "quant-tester",
+        "quant-reviewer",
+        "quant-budget-guard"
+      ],
+      "tasks": [],
+      "config": {
+        "topology": "hierarchical",
+        "maxAgents": 6,
+        "strategy": "specialized",
+        "communicationProtocol": "message-bus",
+        "autoScaling": true,
+        "consensusMechanism": "majority"
+      },
+      "createdAt": "2026-06-04T15:09:02.912Z",
+      "updatedAt": "2026-06-04T15:09:02.912Z",
+      "pid": 13284
+    }
+  },
+  "version": "3.0.0"
+}

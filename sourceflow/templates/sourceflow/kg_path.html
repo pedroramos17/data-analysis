@@ -1,0 +1,34 @@
+{% extends "sourceflow/base.html" %}
+{% block title %}KG paths{% endblock %}
+{% block content %}
+<h2>Knowledge graph path view</h2>
+<form class="inline" method="get">
+  <input type="text" name="source_type" value="{{ params.source_type }}" placeholder="source type (e.g. claim)">
+  <input type="text" name="source_id" value="{{ params.source_id }}" placeholder="source id">
+  →
+  <input type="text" name="target_type" value="{{ params.target_type }}" placeholder="target type (e.g. source)">
+  <input type="text" name="target_id" value="{{ params.target_id }}" placeholder="target id">
+  <button type="submit">Find paths</button>
+</form>
+{% if error %}<p class="neg">{{ error }}</p>{% endif %}
+{% if submitted and not error %}
+  {% if paths %}
+    <p class="muted">{{ paths|length }} path(s) found.</p>
+    {% for path in paths %}
+    <div class="card">
+      {% for edge in path %}
+        <code>{{ edge.source_node_type }}:{{ edge.source_node_id }}</code>
+        —<strong>{{ edge.edge_type }}</strong>→
+        <code>{{ edge.target_node_type }}:{{ edge.target_node_id }}</code>
+        {% if not forloop.last %}<br>{% endif %}
+      {% endfor %}
+    </div>
+    {% endfor %}
+  {% else %}
+  <p class="empty">No path found within the depth limit.</p>
+  {% endif %}
+{% else %}
+<p class="muted">Enter two graph nodes to trace provenance paths between them
+(node types: claim, event, entity, document, source, evidence_span, …).</p>
+{% endif %}
+{% endblock %}

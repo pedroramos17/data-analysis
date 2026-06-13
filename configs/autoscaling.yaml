@@ -1,0 +1,11 @@
+autoscaling:
+  enabled: true
+  min_workers: 0
+  max_gpu_workers: 1
+  max_cpu_workers: 2
+  queue_check_interval_seconds: 30
+  idle_timeout_seconds: 300
+  max_hourly_budget_usd: 1.00
+  max_daily_budget_usd: 5.00
+  prefer_spot: true
+  batch_small_jobs: true

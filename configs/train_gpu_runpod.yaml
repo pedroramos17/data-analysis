@@ -1,0 +1,42 @@
+# Secure RunPod planning config. A real paid submit still requires
+# RUNPOD_DRY_RUN=false, RUNPOD_API_KEY, remote artifact URIs, and --confirm-cost.
+model_name: fin_mamba
+model_version: runpod_mvp_v1
+training_mode: windowed
+dataset_uri: s3://example-bucket/data/lake/datasets/dataset=spy_rolling/version=mvp_v1
+output_uri: s3://example-bucket/data/lake/models/fin_mamba/runpod
+logs_uri: s3://example-bucket/data/lake/logs/runpod/fin_mamba
+metrics_uri: s3://example-bucket/data/lake/metrics/runpod/fin_mamba
+config_path: configs/train_gpu_runpod.yaml
+target_column: close
+feature_columns:
+  - open
+  - high
+  - low
+  - volume
+epochs: 10
+learning_rate: 0.001
+batch_size: 64
+seed: 42
+device: cuda
+max_runtime_seconds: 3600
+idle_timeout_seconds: 300
+min_gpu_memory_gb: 16
+dataset_size_gb: 1.0
+hourly_cost_usd: 0.50
+runpod_gpu_type: NVIDIA RTX A4000
+runpod_image: ghcr.io/pedroramos17/data-analysis:latest
+command: python3 -m src.cli train run-windowed --config configs/train_gpu_runpod.yaml
+require_duckdb: false
+generate_runpod_spec: true
+compute:
+  provider: runpod
+  dry_run: true
+  max_job_minutes: 60
+  idle_timeout_seconds: 300
+  max_hourly_cost_usd: 0.50
+  prefer_spot: true
+security:
+  terminate_remote_on_timeout: true
+  redact_secrets: true
+  api_token_logged: false

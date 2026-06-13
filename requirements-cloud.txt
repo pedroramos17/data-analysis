@@ -4,3 +4,10 @@
 # for AWS, GCP, Azure, Kaggle, Colab, RunPod, Modal, or similar platforms are
 # intentionally not required by the core project.
 
+# Postgres is optional and only needed when DB_MODE=postgres or when running the
+# Docker-backed compatibility integration test.
+psycopg[binary]>=3.2,<4.0
+
+# S3-compatible object storage is optional and selected only when
+# STORAGE_PROVIDER=s3|r2|b2|minio.
+boto3>=1.34,<2.0

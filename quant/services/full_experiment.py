@@ -8,6 +8,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from quant.services.registry import stable_config_hash
+from src.config.settings import load_runtime_settings
+from src.providers.provenance import build_provider_provenance
 
 DAG_STEPS = [
     "Data",
@@ -59,6 +61,7 @@ class FullExperimentConfig:
     live_trading: bool = False
     compute_profile: str = "local_cpu"
     data_root: str = "data/quant"
+    provider_metadata: dict[str, object] = field(default_factory=dict)
 
 
 @dataclass(frozen=True, slots=True)
@@ -314,6 +317,7 @@ def _provenance_payload(
     step_records: list[dict[str, object]],
 ) -> dict[str, object]:
     return {
+        "providers": _provider_metadata(config),
         "orchestrator": {
             "dag": list(DAG_STEPS),
             "steps": step_records,
@@ -322,6 +326,15 @@ def _provenance_payload(
             "compute_profile": config.compute_profile,
         }
     }
+
+
+def _provider_metadata(config: FullExperimentConfig) -> dict[str, object]:
+    if config.provider_metadata:
+        return dict(config.provider_metadata)
+    try:
+        return build_provider_provenance(load_runtime_settings())
+    except Exception as exc:
+        return {"error": {"type": type(exc).__name__, "message": str(exc)}}
 
 
 def _config_payload(config: FullExperimentConfig) -> dict[str, object]:

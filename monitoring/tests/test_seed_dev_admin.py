@@ -14,18 +14,19 @@ class SeedDevAdminCommandTests(TestCase):
 
     @override_settings(DEBUG=True)
     def test_default_debug_seed_creates_superuser(self) -> None:
-        """Local DEBUG mode can use documented fallback credentials."""
+        """Local DEBUG mode generates credentials when none are provided."""
         output = StringIO()
 
         with patch.dict("os.environ", {}, clear=True):
             call_command("seed_dev_admin", "--show-credentials", stdout=output)
 
+        generated_password = _password_from_output(output.getvalue())
         user = get_user_model().objects.get(username="admin")
         self.assertTrue(user.is_staff)
         self.assertTrue(user.is_superuser)
         self.assertTrue(user.is_active)
-        self.assertTrue(user.check_password("admin12345"))
-        self.assertIn("Password: admin12345", output.getvalue())
+        self.assertTrue(user.check_password(generated_password))
+        self.assertNotEqual(generated_password, "admin12345")
 
     @override_settings(DEBUG=True)
     def test_repeated_seed_does_not_duplicate_user(self) -> None:
@@ -56,10 +57,10 @@ class SeedDevAdminCommandTests(TestCase):
                 call_command("seed_dev_admin", stdout=StringIO())
 
     @override_settings(DEBUG=False)
-    def test_debug_false_blocks_fallback_password(self) -> None:
-        """Production override still rejects the documented fallback password."""
+    def test_debug_false_blocks_generated_password(self) -> None:
+        """Production override still rejects generated development passwords."""
         with patch.dict("os.environ", {}, clear=True):
-            with self.assertRaisesMessage(CommandError, "fallback password"):
+            with self.assertRaisesMessage(CommandError, "generated development password"):
                 call_command(
                     "seed_dev_admin",
                     "--allow-production",
@@ -84,6 +85,13 @@ class SeedDevAdminCommandTests(TestCase):
         user = get_user_model().objects.get(username="cli-admin")
         self.assertEqual(user.email, "cli@example.local")
         self.assertTrue(user.check_password("cli-secret"))
+
+
+def _password_from_output(text: str) -> str:
+    for line in text.splitlines():
+        if line.startswith("Password: "):
+            return line.removeprefix("Password: ")
+    raise AssertionError(f"missing password line in output: {text!r}")
 
 
 def _dev_admin_env(password: str) -> dict[str, str]:

@@ -2,11 +2,21 @@
 
 from django.urls import include, path
 
-from monitoring import alert_views, candidate_views, cookbook_views, export_views, views
+from monitoring import (
+    alert_views,
+    candidate_views,
+    cookbook_views,
+    export_views,
+    health_views,
+    intelligence_views,
+    views,
+)
 
 app_name = "monitoring"
 
 urlpatterns = [
+    path("healthz/", health_views.healthz, name="healthz"),
+    path("metrics/", health_views.metrics, name="metrics"),
     path("", views.DashboardView.as_view(), name="dashboard"),
     path(
         "cookbook/",

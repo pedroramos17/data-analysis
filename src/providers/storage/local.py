@@ -18,6 +18,17 @@ class LocalStorageProvider:
 
     root: Path
 
+    def put_file(self, local_path: str | Path, remote_path: str) -> str:
+        """Store a local file under the provider root."""
+        return self.put_bytes(remote_path, Path(local_path).read_bytes())
+
+    def get_file(self, remote_path: str, local_path: str | Path) -> Path:
+        """Copy a local-provider object to a requested local path."""
+        target = Path(local_path)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(self.get_bytes(remote_path))
+        return target
+
     def put_bytes(
         self,
         path: str,

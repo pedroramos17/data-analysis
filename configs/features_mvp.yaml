@@ -1,0 +1,20 @@
+lake_root: data/lake
+duckdb_path: data/lake/analytics.duckdb
+version: mvp_v1
+universe:
+  - SPY
+  - QQQ
+start: "2024-01-01"
+end: "2024-01-30"
+timeframe: 1d
+rolling_window: 20
+long_window: 60
+groups:
+  - price_volume
+  - lob
+  - multifractal
+  - regime
+  - risk
+  - graph
+persist_metadata: true
+require_duckdb: false

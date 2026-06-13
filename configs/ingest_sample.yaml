@@ -1,0 +1,12 @@
+name: ingest_sample
+source: sample
+source_type: market
+symbols:
+  - SPY
+  - QQQ
+asset_type: equity
+timeframe: 1d
+start: "2024-01-01"
+periods: 30
+output_prefix: raw/source=sample
+notes: deterministic sample OHLCV ingest; no network or paid API calls required

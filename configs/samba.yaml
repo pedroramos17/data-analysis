@@ -1,0 +1,29 @@
+model:
+  name: samba
+  module: src.models.sequence.samba_block.SambaForecastModel
+  version: local-samba-v1
+  purpose: long-sequence financial forecasting with cross-asset context
+
+config:
+  input_dim: 32
+  hidden_dim: 64
+  num_layers: 2
+  dropout: 0.05
+  horizon: 5
+  output_dim: 1
+  kernel_size: 5
+  attention_rank: 16
+  attention_stride: 4
+  asset_conditioning: true
+
+inputs:
+  x_time: [batch, time, features]
+  x_cross: [batch, assets, cross_features]
+
+outputs:
+  forecast: [batch, horizon, output_dim]
+  uncertainty_proxy: [batch, horizon, output_dim]
+  branch_diagnostics:
+    - branch_contribution_weights
+    - feature_saliency_placeholder
+    - temporal_contribution_summary
