@@ -6,7 +6,7 @@ from collections.abc import Iterable, Mapping
 
 import networkx as nx
 
-from sourceflow.intelligence.market.contracts import CompanyRelation, InstrumentRef
+from sourceflow.finance_core.contracts import CompanyRelation, InstrumentRef
 
 
 def build_company_graph(

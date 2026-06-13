@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
-from sourceflow.intelligence.market.contracts import (
+from sourceflow.finance_core.contracts import (
     CompanyRelation,
     InstrumentRef,
     LimitOrderBookSnapshot,

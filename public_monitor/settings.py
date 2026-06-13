@@ -55,8 +55,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "monitoring.apps.MonitoringConfig",
-    "quant4.apps.Quant4Config",
-    "quantspace.apps.QuantspaceConfig",
+    "quant.apps.QuantConfig",
+    "researchspace.apps.ResearchspaceConfig",
 ]
 
 MIDDLEWARE = [

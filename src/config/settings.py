@@ -1,4 +1,4 @@
-"""Runtime mode settings for local and cheap-cloud Quant4 deployments."""
+"""Runtime mode settings for local and cheap-cloud Quant deployments."""
 
 from __future__ import annotations
 

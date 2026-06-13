@@ -1,0 +1,1 @@
+"""Quant regime detector services."""

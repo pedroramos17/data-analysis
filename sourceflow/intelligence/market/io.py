@@ -9,7 +9,7 @@ from dataclasses import asdict, dataclass, is_dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
-from sourceflow.intelligence.market.contracts import (
+from sourceflow.finance_core.contracts import (
     CompanyRelation,
     InstrumentRef,
     LimitOrderBookSnapshot,

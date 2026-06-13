@@ -1,127 +1,56 @@
-# Project Handoff
-
-Date: 2026-06-02
-
-Project: `github.com/pedroramos17/data-analysis`
-
-Working directory:
-`C:\Users\pedro\Documents\Codex\2026-05-15\prior-conversation-with-codex-conversation-role\data-analysis`
+# Handoff: Phase 0-2 Finance/Quant Boundary Refactor
 
 ## Current State
 
-- Branch: `codex/quant4-multifractal-refactor`
-- Remote status: clean and synced with `origin/codex/quant4-multifractal-refactor`
-- Latest commit: `b36f513 feat: add cloud provider facade`
-- Draft PR: `https://github.com/pedroramos17/data-analysis/pull/8`
-- PR title: `[codex] Add Quant4 research cockpit and hybrid runtime foundation`
-- Previous ai-memory handoff id: `019e87ac-7707-7e51-8665-92ca727ce99b`
-- `agentmemory:session-history` returned no stored sessions for this project, so
-  this file is based on current git state and the active chat context.
+### Completed Work
 
-## Recent Commits
+1. Phase 1 - Rename Legacy Quant App to Quant
+   - `quant4/` renamed to `quant/`
+   - Management commands renamed from `quant4_*` to `quant_*`
+   - Feature flags renamed from `QUANT4_*` to `QUANT_*`
+   - Stale documentation removed
+   - Clean grep for stale names
 
-- `b36f513 feat: add cloud provider facade`
-- `4b239f0 feat: add runtime mode settings`
-- `9587bb9 docs: map hybrid quant mvp migration`
-- `a8ea6b0 docs: add quant systems cookbook`
-- `321d210 docs: update multifractal refactor documentation`
+2. Phase 0 - Inventory and Freeze Points
+   - Created `docs/finance_quant_inventory.md` with full file classification
+   - Documented action taxonomy: KEEP_AS_IS, MERGE_INTO_WAREHOUSE, MERGE_INTO_FINANCE_CORE, MOVE_TO_QUANT, etc.
+   - Listed command coverage, test boundaries, and stale doc decisions
 
-## What Was Implemented
+3. Phase 2 - Finance Core Contracts
+   - Created `sourceflow/finance_core/` with:
+     - `contracts.py` (BarRecord, InstrumentRef, MarketBarPoint, etc.)
+     - `time.py` (require_datetime, UTC normalization)
+     - `ids.py` (stable_id)
+     - `enums.py` (DataLayer, AssetClass)
+     - `schemas.py` (BAR_SCHEMA_VERSION)
+   - Created `sourceflow/warehouse/` with:
+     - `parquet_io.py`, `manifests.py`, `paths.py`, `atomic_write.py`
+   - Moved shared market contracts from `sourceflow/intelligence/market/contracts.py` → `sourceflow/finance_core/contracts.py`
+   - Bridged quant multifractal OHLCV bars: `OHLCVBar = BarRecord`
+   - Updated all imports
+   - Added `sourceflow/finance_core/tests/test_contracts.py` (4 passing tests)
 
-### Cookbook And Preview
+### Remaining TODO
 
-- Added a local-first research cookbook covering QuantSpace, Quant4, MarketLab,
-  graphs/topology, risk/regime, portfolio, LOB, full experiment, and
-  multifractal systems.
-- Added read-only Django preview at `/cookbook/`.
-- Updated monitoring navigation and tests.
+- **Phase 3**: Finish warehouse consolidation (move parquet_store, sqlite_registry)
+- **Phase 4**: Build provider-neutral ingestion with `finance_ingestion.providers/`
+- **Phase 5**: Clean dataset boundary (keep leakage/splits/targets, remove providers)
+- **Phase 6**: Add deterministic feature registry and TIN equality tests
+- **Phase 7**: Refactor quant research boundary (engines, backtesting, RL)
+- **Phase 8**: Implement stable command chain (build_market_layer, build_finance_features, etc.)
+- **Phase 9**: Final docs/dead code cleanup
 
-### Hybrid Quant MVP Phase 0
+### Django Dependency Issue
 
-- Added `ARCHITECTURE_NOTES.md`.
-- Added `MIGRATION_PLAN.md`.
-- Added root `TODO.md`.
-- Documented current SQLite, Parquet/Arrow, Quant4, QuantSpace, Sourceflow,
-  monitoring, command, test, and optional dependency boundaries.
-
-### Phase 1 Runtime Modes
-
-- Added `src/config/settings.py`.
-- Supports:
-  - `APP_ENV=local | cloud | test`
-  - `DEPLOYMENT_MODE=onprem | cloud_mvp | cloud_prod`
-  - `DB_MODE=sqlite | postgres`
-  - `OLAP_MODE=duckdb`
-  - `STORAGE_PROVIDER=local | s3 | r2 | b2 | minio`
-  - `QUEUE_PROVIDER=local | redis | sqs | rabbitmq`
-  - `SECRETS_PROVIDER=env | aws_secrets | gcp_secret_manager | doppler`
-  - `MODEL_PROVIDER=local | huggingface | s3 | r2`
-  - `COMPUTE_PROVIDER=local | colab | vastai | gcp | aws`
-- Wired `public_monitor/settings.py` through runtime settings while preserving
-  SQLite as the local default.
-- Updated `.env.example`.
-
-### Phase 2 Provider Facade
-
-- Added `src/providers/`.
-- Added interfaces and local/cloud-boundary providers for:
-  - storage,
-  - database,
-  - warehouse,
-  - queue,
-  - secrets,
-  - compute,
-  - model registry.
-- Added `build_provider_registry()` and getters:
-  - `get_storage()`
-  - `get_db()`
-  - `get_warehouse()`
-  - `get_queue()`
-  - `get_secrets()`
-  - `get_model_registry()`
-  - `get_compute()`
-- Optional SDK imports are confined to provider implementations:
-  - `boto3` in S3-compatible storage,
-  - `redis` in Redis queue,
-  - `psycopg` in Postgres database,
-  - `duckdb` in DuckDB warehouse.
-
-## Validation Already Run
-
-Use `.venv-win`; the WSL `.venv` is not reliable in this checkout.
-
-Commands run successfully during the latest phases:
-
-```powershell
-.\.venv-win\Scripts\ruff.exe check src monitoring\tests\test_provider_registry.py
-.\.venv-win\Scripts\python.exe manage.py check
-.\.venv-win\Scripts\python.exe manage.py makemigrations --check --dry-run
-.\.venv-win\Scripts\python.exe manage.py test monitoring.tests.test_runtime_settings
-.\.venv-win\Scripts\python.exe manage.py test monitoring.tests.test_provider_registry
-.\.venv-win\Scripts\python.exe manage.py test quant4 quantspace
-.\.venv-win\Scripts\python.exe manage.py test
+Django checks/tests are blocked in this environment (`ModuleNotFoundError: No module named 'django'`).
+When environment has Django installed, run:
+```bash
+python3 manage.py check
+python3 manage.py test quant researchspace monitoring.tests.test_research_cookbook
 ```
 
-Latest full suite result: `270 tests`, all passing.
+### Files in This PR
 
-## Safety Boundaries
-
-- Keep SQLite as the local/default metadata store.
-- Keep Parquet/Arrow as the heavy analytical artifact boundary.
-- Do not introduce required cloud credentials for local mode.
-- Do not hardcode cloud SDKs in business logic.
-- Keep optional dependencies lazy and provider-contained.
-- Do not add live trading, broker execution, paid API requirements, or managed
-  GPU requirements.
-
-## Next Steps
-
-- Decide whether PR #8 should remain draft while more cloud MVP phases continue.
-- Continue from `codex/quant4-multifractal-refactor`; do not create another PR
-  unless a separate branch is requested.
-- Start the next implementation phase with tests first.
-- Stage only current-task files and run `git diff --cached --check` before each
-  commit.
-- Recommended next technical phase: harden the database profile and provider
-  integration points, or add fake/local object-storage integration tests before
-  real MinIO/S3-compatible smoke coverage.
+- Modified: configs, settings, imports, docs
+- Deleted: `quant4/` (entire old package), `quantspace/` (entire old package), stale docs
+- Added: `quant/`, `researchspace/`, `sourceflow/finance_core/`, `sourceflow/warehouse/`, new docs

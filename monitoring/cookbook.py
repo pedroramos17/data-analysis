@@ -50,10 +50,10 @@ class NextImprovementGroup:
 
 
 GLOBAL_VALIDATION_COMMANDS = (
-    r".\.venv-win\Scripts\ruff.exe check quant4",
+    r".\.venv-win\Scripts\ruff.exe check quant",
     r".\.venv-win\Scripts\python.exe manage.py check",
     r".\.venv-win\Scripts\python.exe manage.py makemigrations --check --dry-run",
-    r".\.venv-win\Scripts\python.exe manage.py test quant4",
+    r".\.venv-win\Scripts\python.exe manage.py test quant",
     r".\.venv-win\Scripts\python.exe manage.py test",
 )
 
@@ -64,7 +64,7 @@ LOCAL_SAFETY_BOUNDARIES = (
     "No fake metrics",
 )
 
-_QUANTSPACE_COMMANDS = (
+_RESEARCHSPACE_COMMANDS = (
     r'.\.venv-win\Scripts\python.exe manage.py ingest_paper_pdf '
     r'--path paper.pdf --title "Paper"',
     r".\.venv-win\Scripts\python.exe manage.py build_paper_index --paper-id 1",
@@ -73,15 +73,15 @@ _QUANTSPACE_COMMANDS = (
     r".\.venv-win\Scripts\python.exe manage.py extract_quant_methodology --paper-id 1",
     r".\.venv-win\Scripts\python.exe manage.py generate_factor_candidates "
     r"--extraction-id 1",
-    r".\.venv-win\Scripts\python.exe manage.py export_quantspace_parquet --paper-id 1",
+    r".\.venv-win\Scripts\python.exe manage.py export_researchspace_parquet --paper-id 1",
 )
 
-_QUANT4_CORE_COMMANDS = (
-    r".\.venv-win\Scripts\python.exe manage.py quant4_register_assets "
+_QUANT_CORE_COMMANDS = (
+    r".\.venv-win\Scripts\python.exe manage.py quant_register_assets "
     r"--symbol SPY --symbol QQQ --asset-type equity --exchange ARCA --currency USD",
-    r".\.venv-win\Scripts\python.exe manage.py quant4_ingest_prices "
+    r".\.venv-win\Scripts\python.exe manage.py quant_ingest_prices "
     r"--name spy-local --source csv --frequency 1d --symbol SPY",
-    r'.\.venv-win\Scripts\python.exe manage.py quant4_prepare_windows '
+    r'.\.venv-win\Scripts\python.exe manage.py quant_prepare_windows '
     r'--dataset-id 1 --name spy-window --split-json "{}" --config-json "{}"',
 )
 
@@ -99,42 +99,42 @@ _MARKETLAB_COMMANDS = (
 )
 
 _GRAPH_COMMANDS = (
-    r'.\.venv-win\Scripts\python.exe manage.py quant4_build_graphs '
+    r'.\.venv-win\Scripts\python.exe manage.py quant_build_graphs '
     r'--series-json "{""SPY"":[1,2,3],""QQQ"":[1,2,4]}" '
     r"--window-end 2024-01-03 --builder correlation",
 )
 
 _RISK_REGIME_COMMANDS = (
-    r'.\.venv-win\Scripts\python.exe manage.py quant4_run_risk '
+    r'.\.venv-win\Scripts\python.exe manage.py quant_run_risk '
     r'--returns-json "[0.01,-0.02,0.015]" --prices-json "[100,98,101]" '
     r'--volumes-json "[1000,1200,1100]" --data-start 2024-01-01 '
     r"--data-end 2024-01-03 --split-start 2024-01-03 --split-end 2024-01-03",
-    r'.\.venv-win\Scripts\python.exe manage.py quant4_detect_regimes '
+    r'.\.venv-win\Scripts\python.exe manage.py quant_detect_regimes '
     r'--returns-json "[0.01,-0.02,0.015]" --prices-json "[100,98,101]" '
     r"--data-start 2024-01-01 --data-end 2024-01-03 "
     r"--split-start 2024-01-03 --split-end 2024-01-03",
 )
 
 _PORTFOLIO_COMMANDS = (
-    r".\.venv-win\Scripts\python.exe manage.py quant4_optimize_portfolio "
+    r".\.venv-win\Scripts\python.exe manage.py quant_optimize_portfolio "
     r"--symbols AAA,BBB --optimizer equal_weight "
     r"--data-start 2024-01-01 --data-end 2024-01-31 "
     r"--split-start 2024-01-31 --split-end 2024-01-31",
 )
 
 _LOB_COMMANDS = (
-    r".\.venv-win\Scripts\python.exe manage.py quant4_ingest_lob "
-    r"--input-path data\sample_lob.jsonl --output-dir data\quant4_lob "
+    r".\.venv-win\Scripts\python.exe manage.py quant_ingest_lob "
+    r"--input-path data\sample_lob.jsonl --output-dir data\quant_lob "
     r"--venue-type generic --horizon 1",
-    r".\.venv-win\Scripts\python.exe manage.py quant4_train_lob_model "
+    r".\.venv-win\Scripts\python.exe manage.py quant_train_lob_model "
     r"--input-path data\sample_lob.jsonl --model naive_imbalance "
     r"--data-start 2024-01-01 --data-end 2024-01-02 "
     r"--split-start 2024-01-02 --split-end 2024-01-02",
 )
 
 _FULL_EXPERIMENT_COMMANDS = (
-    r'.\.venv-win\Scripts\python.exe manage.py quant4_run_full_experiment '
-    r'--name "global_macro_quant4_v1" '
+    r'.\.venv-win\Scripts\python.exe manage.py quant_run_full_experiment '
+    r'--name "global_macro_quant_v1" '
     r"--asset-classes stocks,commodities,indices,forex,futures "
     r"--symbols SPY,QQQ,DIA,^DJI,^KS11,EURUSD,USDJPY,ES,NQ,CL,GC "
     r"--timeframes 1d,1h,1m --horizon 1 --windows walk_forward "
@@ -147,31 +147,31 @@ _FULL_EXPERIMENT_COMMANDS = (
 )
 
 _MULTIFRACTAL_COMMANDS = (
-    r".\.venv-win\Scripts\python.exe manage.py quant4_import_bars "
+    r".\.venv-win\Scripts\python.exe manage.py quant_import_bars "
     r"--csv .\bars.csv --symbol SPY --output-root data\mf_bars",
-    r".\.venv-win\Scripts\python.exe manage.py quant4_compute_returns "
+    r".\.venv-win\Scripts\python.exe manage.py quant_compute_returns "
     r"--bars-root data\mf_bars --output-root data\mf_returns",
-    r'.\.venv-win\Scripts\python.exe manage.py quant4_mfdfa '
+    r'.\.venv-win\Scripts\python.exe manage.py quant_mfdfa '
     r'--series "0.01,-0.02,0.015,-0.005"',
-    r'.\.venv-win\Scripts\python.exe manage.py quant4_mf_diagnostics '
+    r'.\.venv-win\Scripts\python.exe manage.py quant_mf_diagnostics '
     r'--series "0.01,-0.02,0.015,-0.005"',
-    r'.\.venv-win\Scripts\python.exe manage.py quant4_mf_features '
+    r'.\.venv-win\Scripts\python.exe manage.py quant_mf_features '
     r'--symbol SPY --window-id w0 --series "0.01,-0.02,0.015,-0.005"',
-    r'.\.venv-win\Scripts\python.exe manage.py quant4_mf_risk '
+    r'.\.venv-win\Scripts\python.exe manage.py quant_mf_risk '
     r'--series "0.01,-0.02,0.015,-0.005"',
-    r'.\.venv-win\Scripts\python.exe manage.py quant4_mf_regime '
+    r'.\.venv-win\Scripts\python.exe manage.py quant_mf_regime '
     r'--series "0.01,-0.02,0.015,-0.005"',
-    r'.\.venv-win\Scripts\python.exe manage.py quant4_mf_portfolio '
+    r'.\.venv-win\Scripts\python.exe manage.py quant_mf_portfolio '
     r'--symbols SPY,QQQ --variances "0.02,0.04"',
-    r".\.venv-win\Scripts\python.exe manage.py quant4_mf_report --symbol SPY",
+    r".\.venv-win\Scripts\python.exe manage.py quant_mf_report --symbol SPY",
 )
 
 _RESEARCH_COOKBOOK_SECTIONS = (
     CookbookSection(
-        "QuantSpace",
+        "ResearchSpace",
         "Local paper ingestion, RAG, extraction, and factor-candidate research.",
-        _QUANTSPACE_COMMANDS,
-        (r".\.venv-win\Scripts\python.exe manage.py test quantspace",),
+        _RESEARCHSPACE_COMMANDS,
+        (r".\.venv-win\Scripts\python.exe manage.py test researchspace",),
         (
             "Paper rows, chunks, prompt previews, extractions, candidates, "
             "and Parquet chunks."
@@ -180,28 +180,28 @@ _RESEARCH_COOKBOOK_SECTIONS = (
         "PyMuPDF, embeddings, FAISS, and LLM providers remain optional fallbacks.",
         LOCAL_SAFETY_BOUNDARIES,
         (
-            "/quantspace/papers/",
-            "/quantspace/papers/upload/",
-            "/quantspace/factor-lab/",
+            "/researchspace/papers/",
+            "/researchspace/papers/upload/",
+            "/researchspace/factor-lab/",
         ),
     ),
     CookbookSection(
-        "Quant4 Core",
+        "Quant Core",
         "Registry-first asset, dataset, and window metadata for research runs.",
-        _QUANT4_CORE_COMMANDS,
-        (r".\.venv-win\Scripts\python.exe manage.py test quant4.tests.test_core",),
+        _QUANT_CORE_COMMANDS,
+        (r".\.venv-win\Scripts\python.exe manage.py test quant.tests.test_core",),
         "Assets, MarketDataset rows, and WindowArtifact metadata with provenance.",
-        ("SQLite Quant4 metadata", "shared run metadata"),
+        ("SQLite quant metadata", "shared run metadata"),
         "Missing optional registry components raise clear dependency errors.",
         LOCAL_SAFETY_BOUNDARIES,
     ),
     CookbookSection(
         "MarketLab",
-        "Experimental Quant4 kernel for windows, shuffles, TDA, and benchmarks.",
+        "Experimental quant kernel for windows, shuffles, TDA, and benchmarks.",
         _MARKETLAB_COMMANDS,
-        (r".\.venv-win\Scripts\python.exe manage.py test quant4.tests.test_marketlab",),
+        (r".\.venv-win\Scripts\python.exe manage.py test quant.tests.test_marketlab",),
         "WindowArtifact, GraphSnapshot, ModelRun, and benchmark diagnostics.",
-        ("Quant4 shared models", "local benchmark metadata"),
+        ("quant shared models", "local benchmark metadata"),
         "IMF, topology, and optimizer extras fall back or fail clearly.",
         LOCAL_SAFETY_BOUNDARIES,
     ),
@@ -209,9 +209,9 @@ _RESEARCH_COOKBOOK_SECTIONS = (
         "Graphs And Topology",
         "Leakage-safe graph snapshots, topology filters, and hypergraph priors.",
         _GRAPH_COMMANDS,
-        (r".\.venv-win\Scripts\python.exe manage.py test quant4.tests.test_graph_lab",),
+        (r".\.venv-win\Scripts\python.exe manage.py test quant.tests.test_graph_lab",),
         "GraphSnapshot rows with node, edge, and adjacency artifact paths.",
-        ("data/quant4_graphs", "GraphSnapshot metadata"),
+        ("data/quant_graphs", "GraphSnapshot metadata"),
         "PMFG, TMFG, RMT, and Sourceflow adapters are optional and gated.",
         LOCAL_SAFETY_BOUNDARIES,
     ),
@@ -221,7 +221,7 @@ _RESEARCH_COOKBOOK_SECTIONS = (
         _RISK_REGIME_COMMANDS,
         (
             r".\.venv-win\Scripts\python.exe manage.py test "
-            r"quant4.tests.test_risk_regime",
+            r"quant.tests.test_risk_regime",
         ),
         "RiskRun metrics, stress reports, RegimeRun labels, and model-risk fields.",
         ("SQLite RiskRun rows", "SQLite RegimeRun rows"),
@@ -232,9 +232,9 @@ _RESEARCH_COOKBOOK_SECTIONS = (
         "Portfolio",
         "Research-only allocation, constraints, costs, and portfolio run records.",
         _PORTFOLIO_COMMANDS,
-        (r".\.venv-win\Scripts\python.exe manage.py test quant4.tests.test_portfolio",),
+        (r".\.venv-win\Scripts\python.exe manage.py test quant.tests.test_portfolio",),
         "PortfolioRun rows with weights, trades, metrics, and risk report paths.",
-        ("data/quant4_portfolios", "SQLite PortfolioRun rows"),
+        ("data/quant_portfolios", "SQLite PortfolioRun rows"),
         "CVXPY, Riskfolio, PyPortfolioOpt, and HRP extras fail clearly.",
         LOCAL_SAFETY_BOUNDARIES,
     ),
@@ -242,9 +242,9 @@ _RESEARCH_COOKBOOK_SECTIONS = (
         "LOB Microstructure",
         "Optional venue-normalized order book features, labels, and baselines.",
         _LOB_COMMANDS,
-        (r".\.venv-win\Scripts\python.exe manage.py test quant4.tests.test_lob_lab",),
+        (r".\.venv-win\Scripts\python.exe manage.py test quant.tests.test_lob_lab",),
         "LOBRun rows, normalized feature artifacts, labels, and baseline metrics.",
-        ("data/quant4_lob", "SQLite LOBRun rows"),
+        ("data/quant_lob", "SQLite LOBRun rows"),
         "PyTorch DeepLOB and TCN-LOB models remain optional stubs.",
         LOCAL_SAFETY_BOUNDARIES,
     ),
@@ -254,7 +254,7 @@ _RESEARCH_COOKBOOK_SECTIONS = (
         _FULL_EXPERIMENT_COMMANDS,
         (
             r".\.venv-win\Scripts\python.exe manage.py test "
-            r"quant4.tests.test_full_experiment",
+            r"quant.tests.test_full_experiment",
         ),
         "Dry-run DAG output, Experiment status, skipped steps, and artifact paths.",
         ("SQLite Experiment rows", "local artifact paths when available"),
@@ -270,12 +270,12 @@ _RESEARCH_COOKBOOK_SECTIONS = (
         _MULTIFRACTAL_COMMANDS,
         (
             r".\.venv-win\Scripts\python.exe manage.py test "
-            r"quant4.tests.test_multifractal_cli",
+            r"quant.tests.test_multifractal_cli",
             r".\.venv-win\Scripts\python.exe manage.py test "
-            r"quant4.tests.test_multifractal_quality_gates",
+            r"quant.tests.test_multifractal_quality_gates",
         ),
         "JSON summaries, Parquet feature data, markdown reports, and plot artifacts.",
-        ("data/quant4_multifractal", "FeatureArtifact metadata", "local plot files"),
+        ("data/quant_multifractal", "FeatureArtifact metadata", "local plot files"),
         "scikit-learn, PyWavelets, and plotting dependencies remain optional.",
         LOCAL_SAFETY_BOUNDARIES,
     ),
@@ -304,7 +304,7 @@ _NEXT_IMPROVEMENT_GROUPS = (
         "Near-Term",
         (
             NextImprovement(
-                "Quant4 web dashboard beyond the cookbook",
+                "Quant web dashboard beyond the cookbook",
                 "P1",
                 (
                     "Operators need run metadata views, artifact links, "

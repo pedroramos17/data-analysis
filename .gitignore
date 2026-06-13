@@ -6,7 +6,7 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 media/raw/
-media/quantspace/
+media/researchspace/
 exports/
 data/graphrag_context/
 playwright-report/
