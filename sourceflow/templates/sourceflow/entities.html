@@ -1,0 +1,26 @@
+{% extends "sourceflow/base.html" %}
+{% block title %}Entities{% endblock %}
+{% block content %}
+<h2>Entities</h2>
+<form class="inline" method="get">
+  <input type="text" name="q" value="{{ q }}" placeholder="search canonical name">
+  <button type="submit">Search</button>
+</form>
+{% if entities %}
+<table>
+  <tr><th>ID</th><th>Canonical name</th><th>Type</th><th>Sector</th><th>Country</th><th></th></tr>
+  {% for e in entities %}
+  <tr>
+    <td>{{ e.pk }}</td>
+    <td>{{ e.canonical_name }}</td>
+    <td><span class="pill">{{ e.entity_type }}</span></td>
+    <td>{{ e.sector|default:"—" }}</td>
+    <td>{{ e.country|default:"—" }}</td>
+    <td><a href="{% url 'sourceflow_ui:entity-profile' e.pk %}">profile →</a></td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="empty">No entities found.</p>
+{% endif %}
+{% endblock %}

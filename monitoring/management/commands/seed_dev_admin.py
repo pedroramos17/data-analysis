@@ -14,10 +14,10 @@ class Command(BaseCommand):
     """Create a development admin user with local-safe defaults.
 
     Example:
-        `python manage.py seed_dev_admin --show-credentials`
+        `python3 manage.py seed_dev_admin --show-credentials`
     """
 
-    help = "Seed a development admin user from DEV_ADMIN_* values or local defaults."
+    help = "Seed a development admin user from DEV_ADMIN_* values or generated DEBUG credentials."
 
     def add_arguments(self, parser: CommandParser) -> None:
         """Register seed command options.
@@ -52,13 +52,19 @@ class Command(BaseCommand):
         )
         status = "created" if created else "updated"
         self.stdout.write(f"Development admin {status}: {user.get_username()}")
-        self._write_credentials(credentials.username, credentials.password, options)
+        self._write_credentials(
+            credentials.username,
+            credentials.password,
+            options,
+            password_was_set=created or bool(options["reset_password"]),
+        )
 
     def _write_credentials(
         self,
         username: str,
         password: str,
         options: dict[str, object],
+        password_was_set: bool,
     ) -> None:
         if not bool(options["show_credentials"]):
             return
@@ -66,4 +72,7 @@ class Command(BaseCommand):
             self.stdout.write("Credentials hidden because DEBUG=False")
             return
         self.stdout.write(f"Username: {username}")
+        if not password_was_set:
+            self.stdout.write("Password unchanged; pass --reset-password to update it")
+            return
         self.stdout.write(f"Password: {password}")

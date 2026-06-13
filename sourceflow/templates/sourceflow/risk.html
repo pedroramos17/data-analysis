@@ -1,0 +1,38 @@
+{% extends "sourceflow/base.html" %}
+{% block title %}Risk graph{% endblock %}
+{% block content %}
+<h2>Risk graph view</h2>
+{% if signals is not None %}
+  <h3>{{ entity.canonical_name|default:asset_id }} — propagated risk signals</h3>
+  {% if signals %}
+  <table>
+    <tr><th>Risk type</th><th>Subject</th><th>Score</th><th>Explanation</th></tr>
+    {% for s in signals %}
+    <tr>
+      <td><span class="pill">{{ s.risk_type }}</span></td>
+      <td class="muted">{{ s.subject_type }}:{{ s.subject_id }}</td>
+      <td>{{ s.score }}</td>
+      <td>{{ s.explanation }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  <p class="muted">Each signal carries source evidence and a graph path; risk propagates from events to actors, suppliers, and customers.</p>
+  {% else %}
+  <p class="empty">No risk signals — no events drive risk for this entity yet.</p>
+  {% endif %}
+  <p><a href="{% url 'sourceflow_ui:risk' %}">← pick another entity</a></p>
+{% else %}
+  <p class="muted">Pick an entity to see its propagated risk.</p>
+  {% if entities %}
+  <table>
+    <tr><th>ID</th><th>Entity</th><th>Type</th><th></th></tr>
+    {% for e in entities %}
+    <tr>
+      <td>{{ e.pk }}</td><td>{{ e.canonical_name }}</td><td>{{ e.entity_type }}</td>
+      <td><a href="{% url 'sourceflow_ui:risk-asset' e.pk %}">risk →</a></td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="empty">No entities.</p>{% endif %}
+{% endif %}
+{% endblock %}

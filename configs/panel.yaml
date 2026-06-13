@@ -1,0 +1,13 @@
+lake_root: data/lake
+duckdb_path: data/lake/analytics.duckdb
+output_path: data/lake/gold/research_panel.parquet
+universe:
+  - SPY
+start: "2020-01-01"
+end: "2030-01-01"
+timeframe: 1d
+
+# In cloud_mvp, direct remote scans can be avoided by mirroring object-store
+# prefixes into a local ephemeral/cache path before DuckDB reads Parquet.
+cache_root: data/lake/_cache/object_store
+object_store_prefixes: []

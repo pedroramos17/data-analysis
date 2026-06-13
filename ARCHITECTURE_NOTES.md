@@ -1,6 +1,6 @@
 # Hybrid Quant MVP Architecture Notes
 
-Status: Phase 0 audit
+Status: RunPod pipeline Phase 1 runtime settings implemented
 
 Date: 2026-06-02
 
@@ -61,8 +61,8 @@ Existing analytical storage is local-path based:
 - Local artifact roots include `exports/`, `media/`, `data/`, and
   command-specific output directories.
 
-No DuckDB dependency or DuckDB query facade is currently present. DuckDB should
-be added later as an optional embedded OLAP engine over existing Parquet roots.
+DuckDB is available through `src.warehouse` as an embedded OLAP engine over
+existing local or mirrored Parquet roots.
 
 ### Ingestion Modules
 
@@ -115,8 +115,9 @@ Current model support is intentionally light:
 - `sourceflow.finance_models.mci_gru_gnn_spec` documents feature-flagged
   MCI-GRU/GNN architecture specs.
 
-SAMBA, Mamba, and Fin-Mamba should enter as optional model registry hooks with
-pre-trained artifact references. MVP inference should be CPU-first. GPU batch
+Fin-Mamba and SAMBA now live under `src.models.sequence` as optional PyTorch
+modules. SAMBA exposes `SambaBlock`, `SambaEncoder`, and a registry-backed
+`SambaForecastModel` with CPU-safe defaults and branch diagnostics. GPU batch
 jobs should be provider-backed and optional, never a paid managed GPU
 requirement.
 
@@ -135,45 +136,74 @@ the cloud MVP.
 ### Configuration and Environment Handling
 
 - Django settings are centralized in `public_monitor/settings.py`.
+- Runtime mode and provider-neutral settings live in `src.config.settings`.
 - Remote mobile testing settings are built by `public_monitor.remote_mobile`.
 - Feature flags resolve through settings, environment variables, SQLite, then
   defaults in `sourceflow.config.feature_flags`.
-- `.env.example` exists but there is no Pydantic settings layer yet.
-- There is no `DATABASE_URL` parser, Postgres profile, cloud provider config,
-  object storage config, queue config, or secrets provider config yet.
+- `.env.example` documents local defaults plus optional cloud profile values.
+- Database config keeps SQLite local by default and can render optional Postgres
+  Django settings from `DATABASE_URL` or split `POSTGRES_*` variables.
+- The Quant MVP compatibility schema is additive and lives in
+  `src.database.core_schema` with Alembic migrations under `alembic/`.
+- Compatibility JSON columns use Postgres JSONB and SQLite text JSON through a
+  SQLAlchemy type decorator.
+- The DuckDB analytical layer lives in `src.warehouse` and reads local or
+  object-store-mirrored Parquet partitions without pandas materialization.
+- The feature pipeline lives in `src.features`, generates long-form versioned
+  features from DuckDB views, and can persist aggregated metadata into the
+  compatibility `features` table.
+- The object storage facade lives in `src.storage` and writes data lake objects,
+  model artifacts, reports, logs, cached datasets, and `_manifest.json` files
+  through local or S3-compatible providers.
+- The forecast model layer lives in `src.models` with CPU baselines,
+  local-checkpoint pretrained adapters, optional PyTorch sequence architectures,
+  and Parquet/signals persistence helpers.
+- Provider facades live under `src.providers` for storage, database, warehouse,
+  queue, secrets, compute, and model registry. Optional SDK imports stay inside
+  provider implementations.
+- `src.providers.provenance.build_provider_provenance()` records non-secret
+  provider choices for Quant4 experiment provenance.
+- The API facade lives in `src.api` and exposes provider-neutral FastAPI routes
+  over health, runtime config, jobs, compatibility reads, model registry, and
+  storage presigning.
 
 Future cloud settings should be provider-neutral and support local defaults.
 
 ### Docker, CI, Scripts, and Tests
 
-- No Dockerfile, compose file, or GitHub Actions workflow is currently present.
+- `Dockerfile`, `docker-compose.local.yml`, and `docker-compose.cloud-mvp.yml`
+  provide local and one-VPS cloud MVP deployment scaffolding.
+- `docker-compose.postgres.yml` remains optional local Postgres test
+  scaffolding.
 - Test entrypoints are Django tests through `manage.py test` and Playwright e2e
   scripts through `package.json`.
 - Python dependencies are declared in `pyproject.toml` and `requirements.txt`.
 - Optional NLP dependencies are in `monitoring/nlp/requirements.txt`.
+- Optional Postgres compatibility testing uses `POSTGRES_TEST_DATABASE_URL`.
+- DuckDB warehouse usage is documented in `docs/duckdb_warehouse.md` and can be
+  invoked with `python -m src.cli warehouse build-panel`.
+- Feature pipeline usage is documented in `docs/feature_pipeline.md` and can be
+  invoked with `python -m src.cli features build`.
+- CLI usage is documented in `docs/cli.md`.
+- Object storage facade usage is documented in `docs/object_storage.md`.
+- Cheapest cloud MVP deployment is documented in `docs/deployment_mvp.md`.
+- Pre-trained model layer usage is documented in `docs/model_layer.md`.
+- API facade usage is documented in `docs/api_facade.md`.
 - The reliable verification environment for this Windows checkout is
   `.\.venv-win\Scripts\python.exe`.
 
-Cloud deployment files should be added as budget-first MVP scaffolding later,
-without making local development depend on containers.
+Cloud deployment files are budget-first MVP scaffolding; local development does
+not depend on containers.
+Budget-first architecture rules are codified in
+`docs/architecture/budget_first_rules.md` and enforced by dependency-light tests.
 
 ## Gaps To Fill For Cloud MVP
 
-- Provider-neutral settings object for environment mode, budget limits, and
-  local/cloud resource endpoints.
-- Database provider abstraction that keeps SQLite local and adds Postgres as an
-  optional cloud transactional profile.
-- Object storage facade with local filesystem default and optional
-  S3-compatible adapters for MinIO, Cloudflare R2, Backblaze B2, or AWS S3.
-- DuckDB analytical facade over existing Parquet roots.
-- Compute provider facade for local sync execution, local queued execution,
-  and future batch GPU job manifests.
-- Secrets provider facade with environment/local file defaults and future cloud
-  provider adapters.
-- Queue provider facade with a local in-process/null queue default.
-- Model registry facade that can register local artifact paths and future
-  object-storage URIs.
-- Optional pre-trained SAMBA/Mamba/Fin-Mamba hooks behind feature flags.
+- Optional real MinIO or S3-compatible smoke coverage.
+- Optional VPS hardening: reverse proxy TLS, backups, and managed Postgres/R2
+  overrides.
+- Optional real pretrained dependencies and checkpoints for Chronos, PatchTST,
+  NeuralProphet, TimesFM, Fin-Mamba, and production SAMBA weights.
 
 ## Preservation Rules
 
@@ -182,5 +212,7 @@ without making local development depend on containers.
   monitoring modules.
 - Do not hardcode cloud vendor SDKs into business logic.
 - Do not introduce expensive or heavy dependencies as required dependencies.
+- Do not add Kubernetes, Kafka, Spark, managed vector DB, always-on GPU, or an
+  expensive observability stack as required MVP infrastructure.
 - Every cloud component must have a local fallback.
 - Preserve no-paid-API, no-live-trading, and no-fake-metrics boundaries.

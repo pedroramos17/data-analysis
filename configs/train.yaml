@@ -1,0 +1,24 @@
+model_name: ridge_return
+dataset_path: data/lake/datasets/dataset=spy_rolling/version=phase6_v1/window_id=0
+target_column: close
+feature_columns:
+  - open
+  - high
+  - low
+  - volume
+output_root: data/lake/models
+epochs: 1
+learning_rate: 0.001
+batch_size: 32
+seed: 42
+device: auto
+early_stopping_patience: 10
+early_stopping_min_delta: 0.0001
+gradient_clip_enabled: true
+gradient_clip_max_norm: 1.0
+lr_decay_factor: 0.5
+lr_decay_epochs: 10
+min_lr: 0.000001
+require_duckdb: false
+generate_runpod_spec: false
+model_version: phase7_v1

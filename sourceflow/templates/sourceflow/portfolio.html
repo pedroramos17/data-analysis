@@ -1,0 +1,35 @@
+{% extends "sourceflow/base.html" %}
+{% block title %}Portfolio explanation{% endblock %}
+{% block content %}
+<h2>Portfolio explanation view</h2>
+<form class="inline" method="get">
+  <input type="text" name="portfolio_id" value="{{ portfolio_id }}" placeholder="portfolio id" list="portfolios">
+  <datalist id="portfolios">{% for p in portfolios %}<option value="{{ p }}">{% endfor %}</datalist>
+  <button type="submit">Explain</button>
+</form>
+{% if explanation %}
+  <div class="card muted">
+    portfolio <strong>{{ explanation.portfolio_id }}</strong> ·
+    confidence {{ explanation.confidence }} · assumptions {{ explanation.assumptions_used|join:", " }}
+  </div>
+  <h3>Top risk contributors</h3>
+  {% if explanation.top_risk_contributors %}
+  <table>
+    <tr><th>Asset</th><th>Risk factors</th><th>Hedge candidates</th><th>Conf</th></tr>
+    {% for c in explanation.top_risk_contributors %}
+    <tr>
+      <td>{{ c.asset }}</td>
+      <td>{{ c.risk_factors|join:", " }}</td>
+      <td class="muted">{{ c.suggested_hedge_candidates|join:", "|default:"—" }}</td>
+      <td>{{ c.confidence }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  <p class="muted">Each contributor lists relevant events, source evidence, graph paths, and rule-based hedge suggestions.</p>
+  {% else %}<p class="empty">No risk contributors computed for this portfolio.</p>{% endif %}
+{% elif portfolio_id %}
+  <p class="empty">No positions found for portfolio “{{ portfolio_id }}”.</p>
+{% else %}
+  <p class="muted">Enter a portfolio id to see its top risk contributors with evidence and hedge candidates.</p>
+{% endif %}
+{% endblock %}

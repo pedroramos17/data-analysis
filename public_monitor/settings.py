@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "monitoring.apps.MonitoringConfig",
+    "sourceflow.apps.SourceflowConfig",
     "quant4.apps.Quant4Config",
     "quantspace.apps.QuantspaceConfig",
 ]
@@ -135,6 +136,11 @@ QUEUE_PROVIDER = RUNTIME_SETTINGS.queue.provider
 SECRETS_PROVIDER = RUNTIME_SETTINGS.secrets_provider
 MODEL_PROVIDER = RUNTIME_SETTINGS.model.provider
 COMPUTE_PROVIDER = RUNTIME_SETTINGS.compute.provider
+ORCHESTRATOR = RUNTIME_SETTINGS.pipeline.orchestrator
+RATE_LIMIT_PROVIDER = RUNTIME_SETTINGS.rate_limit.provider
+MODEL_DEVICE = RUNTIME_SETTINGS.pipeline.model_device
+COST_MODE = RUNTIME_SETTINGS.pipeline.cost_mode
+RUNPOD_DRY_RUN = RUNTIME_SETTINGS.runpod.dry_run
 DATA_LAKE_DIR = RUNTIME_SETTINGS.duckdb.data_lake_root
 DUCKDB_PATH = RUNTIME_SETTINGS.duckdb.database_path
 MODEL_CACHE_DIR = RUNTIME_SETTINGS.model.cache_root

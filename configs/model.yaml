@@ -1,0 +1,13 @@
+sync: true
+model_name: naive_return
+config: {}
+fit_config:
+  target_column: log_return
+dataset:
+  - symbol: SPY
+    ts: "2024-01-01"
+    log_return: 0.01
+  - symbol: SPY
+    ts: "2024-01-02"
+    log_return: 0.02
+output_path: data/lake/models/naive_return.json

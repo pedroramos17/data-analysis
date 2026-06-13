@@ -1,0 +1,32 @@
+sync: true
+model_name: naive_return
+config: {}
+fit_config:
+  target_column: log_return
+horizon: 1d
+train_dataset:
+  - asset_id: 1
+    symbol: SPY
+    ts: "2024-01-01"
+    log_return: 0.01
+  - asset_id: 1
+    symbol: SPY
+    ts: "2024-01-02"
+    log_return: 0.02
+  - asset_id: 2
+    symbol: QQQ
+    ts: "2024-01-01"
+    log_return: -0.01
+  - asset_id: 2
+    symbol: QQQ
+    ts: "2024-01-02"
+    log_return: 0.03
+dataset:
+  - asset_id: 1
+    symbol: SPY
+    ts: "2024-01-03"
+  - asset_id: 2
+    symbol: QQQ
+    ts: "2024-01-03"
+output_path: data/lake/predictions/mvp_predictions.parquet
+database_url: ""

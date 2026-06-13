@@ -1,0 +1,23 @@
+{% extends "sourceflow/base.html" %}
+{% block title %}Claims{% endblock %}
+{% block content %}
+<h2>Claim explorer</h2>
+{% if claims %}
+<table>
+  <tr><th>ID</th><th>Subject</th><th>Predicate</th><th>Object</th><th>Polarity</th><th>Status</th><th>Evidence span</th></tr>
+  {% for c in claims %}
+  <tr>
+    <td>{{ c.pk }}</td>
+    <td>{% if c.subject_entity %}<a href="{% url 'sourceflow_ui:entity-profile' c.subject_entity_id %}">{{ c.subject_entity.canonical_name }}</a>{% else %}—{% endif %}</td>
+    <td>{{ c.predicate }}</td>
+    <td>{% if c.object_literal %}{{ c.object_literal }}{% elif c.object_entity %}{{ c.object_entity.canonical_name }}{% else %}—{% endif %}</td>
+    <td class="{% if c.polarity == 'negative' %}neg{% elif c.polarity == 'positive' %}pos{% endif %}">{{ c.polarity }}</td>
+    <td><span class="pill">{{ c.status }}</span></td>
+    <td class="muted">{% if c.evidence_span %}“{{ c.evidence_span.text|slice:":60" }}”{% else %}—{% endif %}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="empty">No claims extracted yet.</p>
+{% endif %}
+{% endblock %}

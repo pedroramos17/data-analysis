@@ -1,0 +1,49 @@
+{% extends "sourceflow/base.html" %}
+{% block title %}Entity profile{% endblock %}
+{% block content %}
+{% if not entity %}
+  <h2>Entity not found</h2>
+  <p class="empty">No entity with id {{ entity_id }}.</p>
+{% else %}
+  <h2>{{ entity.canonical_name }} <span class="pill">{{ entity.entity_type }}</span></h2>
+  <div class="card muted">
+    sector: {{ entity.sector|default:"—" }} · country: {{ entity.country|default:"—" }} ·
+    confidence: {{ entity.confidence }} · external ids: <code>{{ entity.external_ids_json }}</code>
+  </div>
+
+  <h3>Claims ({{ claims|length }})</h3>
+  {% if claims %}
+  <table>
+    <tr><th>ID</th><th>Predicate</th><th>Object</th><th>Polarity</th><th>Modality</th><th>Source</th><th>Conf</th></tr>
+    {% for c in claims %}
+    <tr>
+      <td>{{ c.pk }}</td>
+      <td>{{ c.predicate }}</td>
+      <td>{{ c.object_literal|default:c.object_entity_id|default:"—" }}</td>
+      <td class="{% if c.polarity == 'negative' %}neg{% elif c.polarity == 'positive' %}pos{% endif %}">{{ c.polarity }}</td>
+      <td>{{ c.modality }}</td>
+      <td class="muted">{{ c.source.name }}</td>
+      <td>{{ c.confidence }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="empty">No claims mention this entity.</p>{% endif %}
+
+  <h3>Events ({{ events|length }})</h3>
+  {% if events %}
+  <table>
+    <tr><th>ID</th><th>Type</th><th>Predicate</th><th>Polarity</th><th>When</th><th>Source</th></tr>
+    {% for ev in events %}
+    <tr>
+      <td>{{ ev.pk }}</td>
+      <td><span class="pill">{{ ev.event_type }}</span></td>
+      <td>{{ ev.predicate }}</td>
+      <td class="{% if ev.polarity == 'negative' %}neg{% elif ev.polarity == 'positive' %}pos{% endif %}">{{ ev.polarity }}</td>
+      <td class="muted">{{ ev.event_time|default:"—" }}</td>
+      <td class="muted">{{ ev.source.name }} · <a href="{% url 'sourceflow_ui:source-comparison-event' ev.pk %}">compare sources →</a></td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="empty">No events mention this entity.</p>{% endif %}
+{% endif %}
+{% endblock %}

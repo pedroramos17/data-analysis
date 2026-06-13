@@ -1,0 +1,21 @@
+{% extends "sourceflow/base.html" %}
+{% block title %}Sourceflow{% endblock %}
+{% block content %}
+<h2>Knowledge layer overview</h2>
+<div class="card">
+  <table>
+    <tr><th>Documents</th><th>Entities</th><th>Claims</th><th>Events</th><th>Beliefs</th></tr>
+    <tr>
+      <td>{{ counts.documents }}</td>
+      <td>{{ counts.entities }}</td>
+      <td>{{ counts.claims }}</td>
+      <td>{{ counts.events }}</td>
+      <td>{{ counts.beliefs }}</td>
+    </tr>
+  </table>
+</div>
+<p class="muted">Pick a screen above. Every claim, event, and belief links back to its source evidence;
+beliefs show why they exist; GraphRAG answers carry their evidence and assumptions.</p>
+<p class="muted">JSON API is mounted under <code>/sourceflow/api/</code> (e.g.
+<code>/sourceflow/api/documents</code>, <code>/sourceflow/api/beliefs/&lt;id&gt;/explain</code>).</p>
+{% endblock %}

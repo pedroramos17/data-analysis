@@ -1,0 +1,26 @@
+model_name: fin_mamba
+model_version: mvp_v1
+dataset_name: spy_rolling
+version: mvp_v1
+dataset_path: data/lake/datasets
+target_column: close
+feature_columns:
+  - open
+  - high
+  - low
+  - volume
+output_root: data/lake/models
+training_mode: windowed
+architecture: fin_mamba_small
+input_dim: 4
+hidden_dim: 8
+num_layers: 1
+sequence_length: 16
+epochs: 1
+learning_rate: 0.001
+batch_size: 32
+seed: 42
+device: cpu
+require_duckdb: false
+generate_runpod_spec: false
+notes: optional sequence-model smoke; stays local and skips heavy GPU assumptions

@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import builtins
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 from django.test import SimpleTestCase
 
@@ -33,7 +35,7 @@ class ProviderRegistryTests(SimpleTestCase):
             self.assertTrue(registry.get_queue().healthcheck())
             self.assertEqual(
                 registry.get_compute().submit_job({"name": "x"}).status,
-                "COMPLETED",
+                "PLANNED",
             )
             self.assertEqual(
                 registry.get_secrets().get("MISSING", "fallback"),
@@ -82,6 +84,30 @@ class ProviderRegistryTests(SimpleTestCase):
         with self.assertRaisesRegex(RuntimeError, "boto3.*expected installed module"):
             storage.put_bytes("x.txt", b"x")
 
+    def test_postgres_provider_fails_clearly_when_driver_missing(self) -> None:
+        """Postgres provider keeps psycopg optional until Postgres is selected."""
+        from src.config.settings import load_runtime_settings
+        from src.providers.base import MissingProviderDependencyError
+        from src.providers.database.postgres import PostgresDatabaseProvider
+        from src.providers.registry import build_provider_registry
+
+        settings = load_runtime_settings(
+            env={
+                "DB_MODE": "postgres",
+                "DATABASE_URL": "postgresql://quant:secret@db.example:5432/quant",
+            },
+            base_dir=Path("C:/app"),
+        )
+        provider = build_provider_registry(settings).get_db()
+
+        self.assertIsInstance(provider, PostgresDatabaseProvider)
+        with patch("builtins.__import__", side_effect=_missing_psycopg_import):
+            with self.assertRaisesRegex(
+                MissingProviderDependencyError,
+                "psycopg.*Postgres provider",
+            ):
+                provider.get_engine()
+
     def test_unsupported_queue_provider_fails_clearly(self) -> None:
         """Redis provider is a boundary stub unless redis is installed."""
         from src.config.settings import load_runtime_settings
@@ -105,3 +131,12 @@ def _cloud_mvp_env() -> dict[str, str]:
         "OBJECT_STORAGE_ACCESS_KEY_ID": "access-key",
         "OBJECT_STORAGE_SECRET_ACCESS_KEY": "secret-key",
     }
+
+
+_ORIGINAL_IMPORT = builtins.__import__
+
+
+def _missing_psycopg_import(name: str, *args: object, **kwargs: object) -> object:
+    if name == "psycopg":
+        raise ImportError("No module named psycopg")
+    return _ORIGINAL_IMPORT(name, *args, **kwargs)

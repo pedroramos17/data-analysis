@@ -2,6 +2,7 @@
 
 import os
 from dataclasses import dataclass
+from secrets import token_urlsafe
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -10,7 +11,7 @@ from django.core.management.base import CommandError
 
 DEV_ADMIN_DEFAULT_USERNAME = "admin"
 DEV_ADMIN_DEFAULT_EMAIL = "admin@example.local"
-DEV_ADMIN_DEFAULT_PASSWORD = "admin12345"
+DEV_ADMIN_PASSWORD_BYTES = 18
 
 
 @dataclass(frozen=True)
@@ -56,7 +57,7 @@ def validate_dev_admin_environment(
     credentials: DevAdminCredentials,
     allow_production: bool,
 ) -> None:
-    """Block fallback credentials outside DEBUG unless explicitly allowed.
+    """Block generated credentials outside DEBUG unless explicitly allowed.
 
     Example:
         `validate_dev_admin_environment(credentials, allow_production=False)`
@@ -68,9 +69,9 @@ def validate_dev_admin_environment(
         raise CommandError(
             "Refusing seed_dev_admin with DEBUG=False; expected --allow-production"
         )
-    if credentials.password_source == "fallback":
+    if credentials.password_source == "generated":
         raise CommandError(
-            "Refusing fallback password 'admin12345' with DEBUG=False; "
+            "Refusing generated development password with DEBUG=False; "
             "expected DEV_ADMIN_PASSWORD or --password"
         )
 
@@ -105,7 +106,7 @@ def _password_with_source(password_override: str) -> tuple[str, str]:
     env_password = os.environ.get("DEV_ADMIN_PASSWORD", "")
     if env_password:
         return env_password, "env"
-    return DEV_ADMIN_DEFAULT_PASSWORD, "fallback"
+    return token_urlsafe(DEV_ADMIN_PASSWORD_BYTES), "generated"
 
 
 def _first_value(override: str, env_value: str, default_value: str) -> str:

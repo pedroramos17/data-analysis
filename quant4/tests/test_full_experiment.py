@@ -92,6 +92,24 @@ class Quant4FullExperimentCommandTests(TestCase):
         self.assertTrue(data_step["artifact_paths"][0].endswith("SPY_1d.csv"))
         self.assertNotIn("metrics", data_step)
 
+    def test_experiment_provenance_includes_provider_metadata(self) -> None:
+        """Experiment provenance records non-secret provider choices."""
+        from quant4.models import Experiment
+
+        call_command(
+            "quant4_run_full_experiment",
+            "--name",
+            "provider-metadata-run",
+            "--dry-run",
+            "--no-live-trading",
+            stdout=StringIO(),
+        )
+
+        experiment = Experiment.objects.get(name="provider-metadata-run")
+        providers = experiment.provenance_json["providers"]
+        self.assertEqual(providers["compute"]["provider"], "local")
+        self.assertNotIn("DATABASE_URL", repr(providers))
+
 
 class Quant4FullExperimentServiceTests(TestCase):
     """The orchestration service should record safe step outcomes."""

@@ -1,0 +1,19 @@
+cost_guard:
+  max_cost_per_job_usd: 2.00
+  max_daily_cost_usd: 5.00
+  require_confirmation_for_paid_jobs: true
+  dry_run_default: true
+  monthly_budget_usd: 25.00
+  max_gpu_hourly_cost_usd: 0.50
+  max_pipeline_minutes_local: 30
+  max_gpu_job_minutes: 60
+runtime:
+  cost_mode: minimum
+  local_first: true
+  cloud_tests_enabled: false
+  external_paid_api_calls_enabled: false
+runpod:
+  dry_run: true
+  max_runtime_seconds: 3600
+  idle_timeout_seconds: 300
+  terminate_on_completion: true

@@ -1,0 +1,10 @@
+architecture: samba_small
+model_name: samba
+model_version: mvp_v1
+requires_torch: true
+input_dim: 4
+hidden_dim: 8
+num_layers: 1
+sequence_length: 16
+artifact_path: data/lake/models/samba_small_mvp_v1.json
+notes: optional architecture metadata smoke; skipped when PyTorch is unavailable

@@ -41,6 +41,26 @@ class BatchStubComputeProvider:
         self._jobs[job_id] = result
         return result
 
+    def cancel_job(self, job_id: str) -> JobSubmission:
+        """Phase 2 alias for `cancel`."""
+        return self.cancel(job_id)
+
+    def stream_logs(self, job_id: str) -> list[str]:
+        """Batch stubs do not have remote logs."""
+        return [] if job_id in self._jobs else []
+
+    def terminate_idle(self) -> dict[str, object]:
+        """Batch stubs never launch remote resources."""
+        return {"provider": self.provider_name, "terminated": 0}
+
+    def estimate_cost(self, job_spec: Mapping[str, object]) -> dict[str, object]:
+        """Return a manifest-only cost placeholder."""
+        return {"provider": self.provider_name, "estimated_cost_usd": 0.0, "currency": "USD"}
+
+    def healthcheck(self) -> bool:
+        """Return whether manifest-only planning is available."""
+        return True
+
 
 def _batch_job_id(provider_name: str, job_spec: Mapping[str, object]) -> str:
     payload = json.dumps(dict(job_spec), sort_keys=True, default=str)

@@ -1,0 +1,28 @@
+lake_root: data/lake
+duckdb_path: data/lake/analytics.duckdb
+version: phase10_v1
+output_path: data/lake/gold/features/version=phase10_v1/feature_store.parquet
+
+universe:
+  - SPY
+start: "2020-01-01"
+end: "2030-01-01"
+timeframe: 1d
+
+groups:
+  - price_volume
+  - lob
+  - multifractal
+  - risk
+  - portfolio
+  - regime
+  - knowledge_graph
+
+# Set these when you want to persist aggregated feature metadata into the
+# SQLite/Postgres compatibility `features` table.
+persist_metadata: false
+database_url: ""
+metadata_row_limit: 100000
+
+cache_root: data/lake/_cache/object_store
+object_store_prefixes: []

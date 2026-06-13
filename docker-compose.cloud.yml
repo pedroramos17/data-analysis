@@ -1,0 +1,74 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        REQUIREMENTS_FILE: requirements-cloud.txt
+    env_file:
+      - ${CLOUD_ENV_FILE:-.env.cloud.example}
+    environment:
+      APP_ENV: ${APP_ENV:-cloud}
+      DEPLOYMENT_MODE: ${DEPLOYMENT_MODE:-cloud_mvp}
+      PORT: ${PORT:-8000}
+      COMPUTE_PROVIDER: ${COMPUTE_PROVIDER:-local}
+      RUNPOD_DRY_RUN: ${RUNPOD_DRY_RUN:-true}
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    restart: unless-stopped
+    volumes:
+      - cloud_app_data:/app/data
+      - cloud_models:/app/models
+      - cloud_exports:/app/exports
+      - cloud_media:/app/media
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/healthz/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  postgres:
+    image: postgres:16-alpine
+    profiles: ["postgres"]
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-quant}
+      POSTGRES_USER: ${POSTGRES_USER:-quant}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
+    volumes:
+      - cloud_postgres:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    profiles: ["minio"]
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD required}
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - cloud_minio:/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    profiles: ["redis"]
+    volumes:
+      - cloud_redis:/data
+    restart: unless-stopped
+
+volumes:
+  cloud_app_data:
+  cloud_models:
+  cloud_exports:
+  cloud_media:
+  cloud_postgres:
+  cloud_minio:
+  cloud_redis:
