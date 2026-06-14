@@ -19,7 +19,7 @@ heavy analytical outputs written as Arrow/Parquet artifacts.
 - `monitoring.sqlite_retry` wraps dashboard writes that may hit local SQLite
   lock contention.
 - Django ORM models are the migration-backed metadata layer for monitoring,
-  Quant4, and QuantSpace.
+  Quant, and QuantSpace.
 - Sourceflow feature flags also support SQLite overrides through
   `monitoring.finance_models.FeatureFlagSetting`.
 
@@ -36,11 +36,11 @@ replacement for existing migrations.
 - `monitoring.finance_models` stores financial instruments, macro data,
   CFTC/fundamental records, multifractal features, statistical scores, and
   prediction dataset manifests.
-- `quant4.models` owns shared Quant4 metadata:
+- `quant.models` owns shared Quant metadata:
   `Asset`, `MarketDataset`, `Experiment`, `WindowArtifact`,
   `FeatureArtifact`, `RegimeRun`, `RiskRun`, `LOBRun`, `GraphSnapshot`,
   `PortfolioRun`, `ModelRun`, `BacktestRun`, and `ExplainabilityReport`.
-- `quantspace.models` owns local paper, chunk, artifact, question, citation,
+- `researchspace.models` owns local paper, chunk, artifact, question, citation,
   extraction, and factor-candidate metadata.
 
 The cloud MVP should keep these schemas compatible. New cloud/provider metadata
@@ -53,10 +53,10 @@ Existing analytical storage is local-path based:
 - `monitoring.exporters.ArrowTableWriter` writes document exports to Parquet.
 - `sourceflow.finance_ingestion.parquet_export` writes finance rows through a
   thin PyArrow boundary.
-- `quantspace.services.chunk_export` writes local paper chunks to Parquet.
-- `quant4.services.multifractal.data.parquet_store` writes partitioned OHLCV
+- `researchspace.services.chunk_export` writes local paper chunks to Parquet.
+- `quant.services.multifractal.data.parquet_store` writes partitioned OHLCV
   bars and return datasets.
-- `quant4.services.multifractal.features.feature_store` writes feature matrices
+- `quant.services.multifractal.features.feature_store` writes feature matrices
   to Parquet.
 - Local artifact roots include `exports/`, `media/`, `data/`, and
   command-specific output directories.
@@ -74,7 +74,7 @@ Current ingestion is command-driven and local-first:
 - Sourceflow finance ingestion includes local files, SEC EDGAR, FRED, CFTC
   COT, Yahoo research, public web policy gates, normalization, quality checks,
   and global market windows.
-- Quant4 ingestion commands include asset registration, price ingestion, LOB
+- Quant ingestion commands include asset registration, price ingestion, LOB
   ingestion, multifractal CSV bar import, return generation, and full
   experiment orchestration.
 - QuantSpace ingestion handles local PDF upload and paper chunking.
@@ -84,19 +84,19 @@ must not place cloud SDK calls in these business modules.
 
 ### Feature Engineering and Research Modules
 
-Quant4 already contains local CPU-first research modules:
+Quant already contains local CPU-first research modules:
 
 - Core data foundation, calendars, corporate actions, futures rolls, FX
   normalization, windows, labels, leakage checks, feature store, factor store,
   evaluation, and reports.
-- MarketLab under `quant4/services/marketlab/` for windowing, shuffling, TDA,
+- MarketLab under `quant/services/marketlab/` for windowing, shuffling, TDA,
   signatures, decomposition, graphs, contrastive workflows, benchmarks, and
   experimental backtests.
-- Graph and topology lab under `quant4/services/graphs/`.
-- Risk and regime services under `quant4/services/risk/`.
-- Portfolio services under `quant4/services/portfolio/`.
-- LOB and microstructure services under `quant4/services/lob/`.
-- Multifractal services under `quant4/services/multifractal/`.
+- Graph and topology lab under `quant/services/graphs/`.
+- Risk and regime services under `quant/services/risk/`.
+- Portfolio services under `quant/services/portfolio/`.
+- LOB and microstructure services under `quant/services/lob/`.
+- Multifractal services under `quant/services/multifractal/`.
 
 These modules should remain local-first. Cloud execution should provide
 artifact locations and job handles, not duplicate research code.
@@ -105,12 +105,12 @@ artifact locations and job handles, not duplicate research code.
 
 Current model support is intentionally light:
 
-- `quant4.services.registry` registers components by category and feature flag.
-- `quant4.services.full_experiment` plans a safe DAG with optional dependency
+- `quant.services.registry` registers components by category and feature flag.
+- `quant.services.full_experiment` plans a safe DAG with optional dependency
   skips for Torch, Torch Geometric, CVXPY, signature, RQA, and graph extras.
-- `quant4.services.lob.deeplob` contains local baselines and optional
+- `quant.services.lob.deeplob` contains local baselines and optional
   PyTorch-gated DeepLOB/TCN-LOB stubs.
-- `quant4.services.multifractal.ml.baselines` uses a deterministic majority
+- `quant.services.multifractal.ml.baselines` uses a deterministic majority
   fallback and optional scikit-learn baselines.
 - `sourceflow.finance_models.mci_gru_gnn_spec` documents feature-flagged
   MCI-GRU/GNN architecture specs.
@@ -123,11 +123,11 @@ requirement.
 
 ### Backtest and Portfolio Surfaces
 
-- Quant4 portfolio optimization stores `PortfolioRun` metadata and artifact
+- Quant portfolio optimization stores `PortfolioRun` metadata and artifact
   paths for weights, trades, metrics, and risk reports.
 - MarketLab has experimental backtest services under
-  `quant4/services/marketlab/backtest.py`.
-- `quant4.services.full_experiment` includes a Backtest DAG step but stays
+  `quant/services/marketlab/backtest.py`.
+- `quant.services.full_experiment` includes a Backtest DAG step but stays
   safe by default through dry-run behavior and no-live-trading enforcement.
 
 No live broker, account, order-placement, or execution code should be added for
@@ -162,7 +162,7 @@ the cloud MVP.
   queue, secrets, compute, and model registry. Optional SDK imports stay inside
   provider implementations.
 - `src.providers.provenance.build_provider_provenance()` records non-secret
-  provider choices for Quant4 experiment provenance.
+  provider choices for Quant experiment provenance.
 - The API facade lives in `src.api` and exposes provider-neutral FastAPI routes
   over health, runtime config, jobs, compatibility reads, model registry, and
   storage presigning.
@@ -208,7 +208,7 @@ Budget-first architecture rules are codified in
 ## Preservation Rules
 
 - Keep SQLite as the default and keep current migrations compatible.
-- Do not delete or bypass existing Quant4, QuantSpace, Sourceflow, or
+- Do not delete or bypass existing Quant, QuantSpace, Sourceflow, or
   monitoring modules.
 - Do not hardcode cloud vendor SDKs into business logic.
 - Do not introduce expensive or heavy dependencies as required dependencies.

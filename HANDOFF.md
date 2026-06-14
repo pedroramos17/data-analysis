@@ -26,7 +26,7 @@ knowledge layer. Phases 0 through 10 are implemented and targeted tests pass.
 
 ## Constraints To Preserve
 
-- Keep existing `monitoring`, `quant4`, `quantspace`, CLI, API, and data paths working.
+- Keep existing `monitoring`, `quant`, `researchspace`, CLI, API, and data paths working.
 - Add adapters and interfaces before replacing behavior.
 - Every extracted object must carry provenance.
 - Every inferred belief must carry justification.

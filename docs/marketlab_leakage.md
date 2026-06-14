@@ -11,4 +11,4 @@ MarketLab windows are built for local research only. The core invariants are:
 - Graph snapshots use observations at or before their `as_of` date.
 
 These rules are implemented in services, not new Django models, so future
-MarketLab work can reuse shared Quant4 artifacts.
+MarketLab work can reuse shared quant artifacts.

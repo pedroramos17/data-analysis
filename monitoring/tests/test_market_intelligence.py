@@ -12,7 +12,7 @@ from django.core.management.base import CommandError
 from django.test import TestCase
 
 from monitoring.models import MarketInstrument, MarketTick
-from sourceflow.intelligence.market.contracts import (
+from sourceflow.finance_core.contracts import (
     CompanyRelation,
     InstrumentRef,
     LimitOrderBookSnapshot,

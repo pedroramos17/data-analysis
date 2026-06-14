@@ -21,7 +21,7 @@ Major changed or added areas:
 | CLI and workflows | `src/cli.py`, `src/workflows/mvp_demo.py`, `configs/cloud_mvp.yaml` |
 | Deployment | `Dockerfile`, `docker-compose.local.yml`, `docker-compose.cloud-mvp.yml`, `docker-compose.postgres.yml`, `Makefile`, `scripts/` |
 | Documentation | `README.md`, `ARCHITECTURE_NOTES.md`, `MIGRATION_PLAN.md`, `docs/` |
-| Tests | `tests/test_*`, `monitoring/tests/test_runtime_settings.py`, `monitoring/tests/test_provider_registry.py`, `quant4/tests/test_*` |
+| Tests | `tests/test_*`, `monitoring/tests/test_runtime_settings.py`, `monitoring/tests/test_provider_registry.py`, `quant/tests/test_*` |
 
 ## 2. How To Run Local Mode
 

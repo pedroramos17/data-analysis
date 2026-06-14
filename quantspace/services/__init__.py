@@ -1,1 +1,0 @@
-"""QuantSpace service layer."""

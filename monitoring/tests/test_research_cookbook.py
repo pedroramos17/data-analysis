@@ -48,8 +48,8 @@ class ResearchCookbookTests(SimpleTestCase):
 
 def _system_labels() -> tuple[str, ...]:
     return (
-        "QuantSpace",
-        "Quant4 Core",
+        "ResearchSpace",
+        "Quant Core",
         "MarketLab",
         "Graphs And Topology",
         "Risk And Regime",
@@ -62,10 +62,10 @@ def _system_labels() -> tuple[str, ...]:
 
 def _required_page_text() -> tuple[str, ...]:
     return (
-        "ruff check quant4",
+        "ruff check quant",
         "manage.py check",
         "makemigrations --check --dry-run",
-        "manage.py test quant4",
+        "manage.py test quant",
         "manage.py test",
         "No paid API dependency",
         "No live trading",

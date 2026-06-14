@@ -65,7 +65,7 @@ Actions:
   structured `Claim`, structured `Event`, `EvidenceSpan`, `AssumptionPolicy`,
   `Belief`, `Justification`, `InferenceRule`, `RetractionLog`,
   `RetrievalTrace`, `KnowledgeEdge`, and portfolio/risk objects not already
-  covered by Quant4.
+  covered by Quant.
 
 Safety constraints:
 
@@ -76,7 +76,7 @@ Safety constraints:
 Implementation status:
 
 - Canonical knowledge models live in an additive `sourceflow` Django app.
-- Existing `monitoring`, `quant4`, and `quantspace` models remain unchanged.
+- Existing `monitoring`, `quant`, and `researchspace` models remain unchanged.
 - `sourceflow/migrations/0001_initial.py` creates canonical source, document,
   chunk, entity, claim, event, evidence, KG, assumption, belief, justification,
   retraction, retrieval, risk, asset, instrument, and portfolio tables.
@@ -115,7 +115,7 @@ Implementation status:
   canonical `EvidenceSpan` persistence, and helper lookups that return original
   document/chunk/span provenance for claims and supporting or contradicting
   claims for beliefs.
-- Existing monitoring, Quant4, QuantSpace, and `src` ingestion paths remain
+- Existing monitoring, Quant, QuantSpace, and `src` ingestion paths remain
   untouched.
 
 ### Step 3 - Entity Layer
@@ -346,7 +346,7 @@ Status: Phases 10 through 15 implemented (quant reasoning, API/UI, evaluation, o
 Actions:
 
 - Add risk graph, event-alpha candidates, regime detector interface, and
-  portfolio explanation adapters over existing Quant4 services.
+  portfolio explanation adapters over existing Quant services.
 - Add API endpoints and minimal UI screens.
 - Add gold datasets and reasoning tests.
 - Add pipeline stages, job state integration, storage strategy, and end-to-end
@@ -477,8 +477,8 @@ Implementation status:
 | `monitoring.comparison_models.Claim` | Treat as legacy text claim; structured claims must be additive and adapter-backed. |
 | `monitoring.TopicCluster` and `EventCoverage` | Treat as coverage/event-cluster inputs; structured market events are additive. |
 | `sourceflow/finance_graph` and `sourceflow/intelligence/market/knowledge_graph.py` | Treat as in-memory/research graph helpers; persistent KG uses a new graph store boundary. |
-| `quant4` services and models | Treat as quant/risk/regime/portfolio adapter targets. Do not rewrite them for KG work. |
-| `quantspace` paper retrieval | Treat as evidence-first retrieval pattern and adapter target for GraphRAG. |
+| `quant` services and models | Treat as quant/risk/regime/portfolio adapter targets. Do not rewrite them for KG work. |
+| `researchspace` paper retrieval | Treat as evidence-first retrieval pattern and adapter target for GraphRAG. |
 | `src.api` and `src.cli` | Extend through additive handlers/subcommands when future phases need API/CLI exposure. |
 
 ## Phase 0 Acceptance Mapping

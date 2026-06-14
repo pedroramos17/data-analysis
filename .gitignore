@@ -9,7 +9,7 @@ __pycache__/
 .ruff_cache/
 .claude-flow/
 media/raw/
-media/quantspace/
+media/researchspace/
 exports/
 data/
 /models/

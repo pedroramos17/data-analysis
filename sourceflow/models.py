@@ -1,7 +1,7 @@
 """Canonical knowledge models for Sourceflow reasoning.
 
 These models are additive. They do not replace the existing `monitoring`,
-`quant4`, or `quantspace` tables; later phases can adapt those records into this
+`quant`, or `researchspace` tables; later phases can adapt those records into this
 canonical schema.
 """
 

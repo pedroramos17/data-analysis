@@ -8,7 +8,7 @@ Date: 2026-06-02
 
 Move the existing offline-first quant research platform toward a cheap
 cloud-ready MVP while preserving local SQLite mode and the current Django,
-Quant4, QuantSpace, Sourceflow, Parquet, and command structure.
+Quant, QuantSpace, Sourceflow, Parquet, and command structure.
 
 The migration should be additive. Local users must be able to run the project
 without Postgres, DuckDB, object storage, cloud queues, cloud secrets, or paid
@@ -40,7 +40,7 @@ Implementation notes:
 - Prefer a small owned settings module first. If Pydantic is introduced, keep
   it optional or lightweight and do not require it for local Django startup
   unless dependency policy is updated.
-- Keep provider interfaces under Quant4 or a shared project namespace that
+- Keep provider interfaces under Quant or a shared project namespace that
   existing apps can import without circular dependencies.
 - Add tests that every provider category resolves to a local fallback.
 
@@ -198,7 +198,7 @@ training required.
 
 Planned behavior:
 
-- Register model specs for SAMBA, Mamba, and Fin-Mamba as optional Quant4 model
+- Register model specs for SAMBA, Mamba, and Fin-Mamba as optional Quant model
   components.
 - CPU-first inference path accepts pre-trained local or object-storage artifact
   references.
@@ -241,12 +241,12 @@ Planned behavior:
 - Queue provider supports local no-op/in-memory behavior for MVP tests.
 - Secrets provider reads environment variables locally and can later wrap cloud
   secret stores.
-- Quant4 full-experiment DAG can include provider metadata in experiment
+- Quant full-experiment DAG can include provider metadata in experiment
   provenance without changing safety rules.
 
 Implementation notes:
 
-- Reuse `quant4.services.registry`, `Experiment`, `ModelRun`, `PipelineJob`,
+- Reuse `quant.services.registry`, `Experiment`, `ModelRun`, `PipelineJob`,
   and compute profile conventions where possible.
 - Do not add live trading, account access, or broker execution paths.
 - Add tests that compute and queue providers never fake completed metrics.
@@ -265,7 +265,7 @@ Implementation status:
   Hugging Face remains a clear optional-dependency stub.
 - `build_provider_provenance()` records provider choices and budget guards
   without connection strings, access keys, or secret values.
-- `quant4.services.full_experiment` stores provider provenance under
+- `quant.services.full_experiment` stores provider provenance under
   `Experiment.provenance_json["providers"]` while preserving no-live-trading
   behavior.
 
@@ -382,7 +382,7 @@ Implementation status:
   selection.
 - Revert provider modules independently without touching existing research
   commands.
-- Validate rollback with `manage.py check`, `manage.py test quant4 quantspace`,
+- Validate rollback with `manage.py check`, `manage.py test quant researchspace`,
   and `manage.py test`.
 
 ## Acceptance Criteria

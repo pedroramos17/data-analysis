@@ -1,9 +1,9 @@
 # MarketLab
 
-MarketLab lives under `quant4/services/marketlab/`. It is an experimental
-service package inside Quant4, not a separate Django app.
+MarketLab lives under `quant/services/marketlab/`. It is an experimental
+service package inside the quant research app, not a separate Django app.
 
-MarketLab uses shared Quant4 models:
+MarketLab uses shared quant models:
 
 - `WindowArtifact` for prepared windows.
 - `GraphSnapshot` for graph outputs.
@@ -17,7 +17,7 @@ benchmarks and graph outputs remain research metadata, not validity or
 profitability claims.
 
 It must not create competing `Experiment`, `WindowArtifact`, `GraphSnapshot`, or
-`ModelRun` tables. New persistence should use the shared Quant4 records unless a
+`ModelRun` tables. New persistence should use the shared quant records unless a
 future ADR explicitly justifies another model.
 
 Commands:

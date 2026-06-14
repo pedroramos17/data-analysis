@@ -1,7 +1,7 @@
 # Target State
 
 The target architecture is an additive neurosymbolic financial reasoning system.
-It keeps the existing Django, FastAPI, CLI, Quant4, QuantSpace, Sourceflow, and
+It keeps the existing Django, FastAPI, CLI, Quant, QuantSpace, Sourceflow, and
 storage contracts intact while adding explicit module boundaries for canonical
 documents, entities, claims, events, graph storage, reasoning, truth maintenance,
 retrieval, GraphRAG, and quant explanations.
@@ -32,18 +32,18 @@ adapters and implementations behind those boundaries.
 
 | Target module | Existing adapter targets | Target responsibility |
 | --- | --- | --- |
-| `sourceflow.ingestion` | `monitoring/parsers/`, `monitoring/management/commands/ingest_*`, `sourceflow/finance_ingestion/`, `src/pipeline/ingestion/`, `quantspace/services/pdf_extraction.py` | Source-specific ingestion adapters for RSS, HTML, APIs, filings, reports, PDFs, local files, and market data. |
+| `sourceflow.ingestion` | `monitoring/parsers/`, `monitoring/management/commands/ingest_*`, `sourceflow/finance_ingestion/`, `src/pipeline/ingestion/`, `researchspace/services/pdf_extraction.py` | Source-specific ingestion adapters for RSS, HTML, APIs, filings, reports, PDFs, local files, and market data. |
 | `sourceflow.normalization` | `monitoring/ingestion_v2.py`, `monitoring/normalizers.py`, `sourceflow/finance_ingestion/normalization.py`, `src/pipeline/preprocessing/` | Canonical document normalization, URL canonicalization, content hashing, deduplication, text cleaning, and chunking. |
 | `sourceflow.entities` | `monitoring.entities`, `monitoring.CanonicalEntity`, `EntityAlias`, `DocumentEntity`, `ArticleEntityMention`, `sourceflow/intelligence/meta_factors/entities.py` | Entity extraction provider boundary, alias registry, entity linking, NIL candidates, and merge workflows. |
 | `sourceflow.claims` | `monitoring.comparison_models.Claim`, `ClaimCluster`, `ClaimClusterMember`, `sourceflow/intelligence/meta_factors/articles.py` | Structured claim extraction, claim normalization, validation, comparison, contradiction inputs, and evidence binding. |
-| `sourceflow.events` | `monitoring.TopicCluster`, `DocumentTopic`, `EventCoverage`, `quant4/services/graphs/`, `sourceflow/intelligence/meta_factors/events.py` | Market-relevant actor-predicate-object events, event classification, event clustering, and impact schema. |
-| `sourceflow.kg` | `sourceflow/finance_graph/`, `sourceflow/intelligence/market/knowledge_graph.py`, `quant4.GraphSnapshot`, `monitoring.EntityRelationship` | Persistent graph store abstraction, SQL-backed graph tables first, path queries, claim/event upserts, and optional later RDF/Neo4j adapters. |
+| `sourceflow.events` | `monitoring.TopicCluster`, `DocumentTopic`, `EventCoverage`, `quant/services/graphs/`, `sourceflow/intelligence/meta_factors/events.py` | Market-relevant actor-predicate-object events, event classification, event clustering, and impact schema. |
+| `sourceflow.kg` | `sourceflow/finance_graph/`, `sourceflow/intelligence/market/knowledge_graph.py`, `quant.GraphSnapshot`, `monitoring.EntityRelationship` | Persistent graph store abstraction, SQL-backed graph tables first, path queries, claim/event upserts, and optional later RDF/Neo4j adapters. |
 | `sourceflow.reasoning` | `sourceflow/intelligence/symbolic/`, `sourceflow/intelligence/search/`, existing alert/risk rules | Assumption policies, deterministic and defeasible rules, contradiction handling, paraconsistent-safe behavior, and abductive diagnosis. |
-| `sourceflow.tms` | No direct equivalent; closest patterns are `monitoring.EventComparisonSnapshot`, `quantspace.PaperCitation`, and provenance JSON fields | Beliefs, justifications, dependencies, retractions, recomputation, and stale-summary invalidation. |
-| `sourceflow.retrieval` | `monitoring.ArticleEmbedding`, `quantspace/services/vector_search.py`, `src/warehouse/`, `src/storage/` | BM25/vector retrieval interfaces, claim/event/entity retrieval, and evidence ranking. |
-| `sourceflow.graphrag` | `monitoring/management/commands/build_graphrag_context.py`, `sourceflow/intelligence/xai/rag_context.py`, `quantspace/services/ask_paper.py` | Hybrid graph/text retriever, evidence packs, proof-carrying answer format, citations, and contradiction inclusion. |
-| `sourceflow.quant` | `quant4/services/`, `sourceflow/finance_features/`, `sourceflow/finance_models/`, `src/pipeline/evaluation/` | Risk graph, event-alpha candidates, regime detector interface, portfolio explanation, and links to existing Quant4 research services. |
-| `sourceflow.evaluation` | `tests/`, `monitoring/tests/`, `quant4/tests/`, `quantspace/tests/`, `src/pipeline/evaluation/` | Gold datasets, extraction metrics, reasoning tests, retrieval tests, and end-to-end demo assertions. |
+| `sourceflow.tms` | No direct equivalent; closest patterns are `monitoring.EventComparisonSnapshot`, `researchspace.PaperCitation`, and provenance JSON fields | Beliefs, justifications, dependencies, retractions, recomputation, and stale-summary invalidation. |
+| `sourceflow.retrieval` | `monitoring.ArticleEmbedding`, `researchspace/services/vector_search.py`, `src/warehouse/`, `src/storage/` | BM25/vector retrieval interfaces, claim/event/entity retrieval, and evidence ranking. |
+| `sourceflow.graphrag` | `monitoring/management/commands/build_graphrag_context.py`, `sourceflow/intelligence/xai/rag_context.py`, `researchspace/services/ask_paper.py` | Hybrid graph/text retriever, evidence packs, proof-carrying answer format, citations, and contradiction inclusion. |
+| `sourceflow.quant` | `quant/services/`, `sourceflow/finance_features/`, `sourceflow/finance_models/`, `src/pipeline/evaluation/` | Risk graph, event-alpha candidates, regime detector interface, portfolio explanation, and links to existing Quant research services. |
+| `sourceflow.evaluation` | `tests/`, `monitoring/tests/`, `quant/tests/`, `researchspace/tests/`, `src/pipeline/evaluation/` | Gold datasets, extraction metrics, reasoning tests, retrieval tests, and end-to-end demo assertions. |
 | `sourceflow.api` | `src/api/app.py`, `src/api/handlers.py`, Django URLs/views | Future API endpoint adapters for documents, entities, claims, events, KG, beliefs, reasoning, GraphRAG, source comparison, and quant explanations. |
 
 ## Target Data Flow

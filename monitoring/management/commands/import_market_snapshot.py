@@ -11,7 +11,7 @@ from django.core.management.base import BaseCommand, CommandError, CommandParser
 
 from monitoring.exporters import ArrowTableWriter
 from monitoring.models import MarketBar, MarketInstrument, MarketTick, Source
-from sourceflow.intelligence.market.contracts import (
+from sourceflow.finance_core.contracts import (
     InstrumentRef,
     MarketBarPoint,
     MarketTickPoint,

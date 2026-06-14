@@ -513,6 +513,15 @@ See:
 - [Cloud student setup](docs/cloud_student_setup.md)
 - [Control dashboard](docs/control_dashboard.md)
 
+## Finance And Quant Refactor
+
+The active finance refactor plan is
+[`docs/finance_quant_refactor_phases.md`](docs/finance_quant_refactor_phases.md).
+It defines the hard `finance_core`, `warehouse`, `finance_ingestion`,
+`finance_dataset`, `finance_features`, and `quant` boundaries. It also records
+the breaking decision that the legacy quant app name is now `quant` everywhere
+and old local SQLite data from that app is not preserved.
+
 ## Control Dashboard
 
 The multi-profile control dashboard is available at:

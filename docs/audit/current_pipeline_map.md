@@ -9,7 +9,7 @@ The repository has two active pipeline layers:
 
 | Layer | Current flow |
 | --- | --- |
-| Django/Quant4/Sourceflow | Management commands ingest public/financial data, normalize it into Django/SQLite metadata, export Parquet artifacts, compute Quant4 features/windows/risk/backtests, and record run metadata in Django models. |
+| Django/Quant/Sourceflow | Management commands ingest public/financial data, normalize it into Django/SQLite metadata, export Parquet artifacts, compute Quant features/windows/risk/backtests, and record run metadata in Django models. |
 | Provider-neutral MVP stack | `src.cli` and `src.api` use provider facades to ingest sample data, write raw Parquet, build DuckDB panels/features, train CPU baselines, persist predictions/signals, run backtest/risk reports, and export reports. |
 
 The current MVP path is:
@@ -33,8 +33,8 @@ The current MVP path is:
 - `sourceflow/finance_ingestion/` for local files, official API connectors,
   public-web policy validation, normalization, quality checks, global market
   windows, and Parquet export.
-- `quant4/management/commands/quant4_ingest_prices.py` and
-  `quant4_ingest_lob.py` for Quant4 market and LOB imports.
+- `quant/management/commands/quant_ingest_prices.py` and
+  `quant_ingest_lob.py` for Quant market and LOB imports.
 - `src.workflows.mvp_demo.sample_market_rows()` for deterministic demo data.
 
 ## Preprocessing And Feature Extraction
@@ -43,11 +43,11 @@ The current MVP path is:
   targets, manifests, and walk-forward splits.
 - `sourceflow/finance_features/` builds multifractal and graph-style finance
   features.
-- `quant4/services/multifractal/` contains MF-DFA/MF-DMA/MF-DCCA, wavelet,
+- `quant/services/multifractal/` contains MF-DFA/MF-DMA/MF-DCCA, wavelet,
   regime, risk, portfolio, and Parquet helpers.
-- `quant4/services/lob/` handles LOB parsing, normalization, queue features,
+- `quant/services/lob/` handles LOB parsing, normalization, queue features,
   order-book features, labels, DeepLOB stubs, and LOB backtests.
-- `quant4/services/marketlab/windows.py` provides rolling, expanding, and purged
+- `quant/services/marketlab/windows.py` provides rolling, expanding, and purged
   walk-forward windows with embargo metadata.
 - `src/features/` builds the provider-neutral DuckDB feature store.
 - `src/warehouse/` builds DuckDB views and materialized panels from Parquet.
@@ -74,9 +74,9 @@ The current MVP path is:
 - `src.models.explainability.alpha_validation_metrics()` provides dependency-light
   alpha diagnostics for MVP reports.
 - `src.workflows.mvp_demo` contains the MVP backtest/risk report path.
-- `quant4/services/marketlab/backtest.py`, `quant4/services/risk/`, and
-  `quant4/services/portfolio/` provide older research services.
-- `quant4/services/full_experiment.py` orchestrates a safe local DAG and enforces
+- `quant/services/marketlab/backtest.py`, `quant/services/risk/`, and
+  `quant/services/portfolio/` provide older research services.
+- `quant/services/full_experiment.py` orchestrates a safe local DAG and enforces
   no-live-trading behavior.
 
 ## SQLite Usage
@@ -86,7 +86,7 @@ SQLite is the default local/on-prem metadata store and must remain in place.
 - `public_monitor/settings.py` builds Django `DATABASES["default"]` from
   `src.config.settings`, defaulting to SQLite.
 - `monitoring.models`, `monitoring.finance_models`, `monitoring.dashboard_models`,
-  `monitoring.orchestration_models`, `quant4.models`, and `quantspace.models`
+  `monitoring.orchestration_models`, `quant.models`, and `researchspace.models`
   are Django/SQLite-backed metadata surfaces.
 - `monitoring.sqlite` and `monitoring.sqlite_retry` provide local SQLite behavior
   and retry helpers.
@@ -102,7 +102,7 @@ SQLite is the default local/on-prem metadata store and must remain in place.
 - `src.storage.artifact_store` writes raw data, model artifacts, reports, logs,
   cached datasets, and manifests through storage providers.
 - `sourceflow.finance_ingestion.parquet_export` and
-  `quant4.services.multifractal.data.parquet_store` are older PyArrow-based
+  `quant.services.multifractal.data.parquet_store` are older PyArrow-based
   local Parquet writers/readers.
 
 ## Config, Env, Docker, CLI, API, And Orchestration
@@ -123,7 +123,7 @@ SQLite is the default local/on-prem metadata store and must remain in place.
 
 ## Current Performance Bottlenecks
 
-- `quant4.services.multifractal.data.parquet_store` reads all matching Parquet
+- `quant.services.multifractal.data.parquet_store` reads all matching Parquet
   files into Python lists before filtering.
 - `sourceflow.finance_ingestion.connectors.local_files` reads full CSV/JSONL and
   Parquet files into memory.
@@ -141,6 +141,6 @@ settings work:
 
 - Django migrations and current Django models.
 - Existing SQLite retry and local dashboard worker behavior.
-- Quant4 research services and no-live-trading guard.
+- Quant research services and no-live-trading guard.
 - Sourceflow ingestion compliance and public-web permission checks.
 - Existing Parquet artifact contracts.

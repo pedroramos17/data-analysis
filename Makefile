@@ -53,10 +53,10 @@ predict:
 	$(MANAGE) build_prediction_dataset --name smoke --dry-run
 
 backtest:
-	$(MANAGE) quant4_run_full_experiment --name smoke-backtest --symbols SPY --timeframes 1d --backtest true --dry-run
+	$(MANAGE) quant_run_full_experiment --name smoke-backtest --symbols SPY --timeframes 1d --backtest true --dry-run
 
 risk:
-	$(MANAGE) quant4_run_risk --name smoke-risk --returns-json '[0.01,0.02,-0.01]' --prices-json '[100,102,101]' --volumes-json '[1000,1100,1050]' --data-start 2024-01-01 --data-end 2024-01-03 --split-start 2024-01-02 --split-end 2024-01-03
+	$(MANAGE) quant_run_risk --name smoke-risk --returns-json '[0.01,0.02,-0.01]' --prices-json '[100,102,101]' --volumes-json '[1000,1100,1050]' --data-start 2024-01-01 --data-end 2024-01-03 --split-start 2024-01-02 --split-end 2024-01-03
 
 mvp-demo:
 	$(PYTHON) -m src.cli mvp-demo --config configs/cloud_mvp.yaml
